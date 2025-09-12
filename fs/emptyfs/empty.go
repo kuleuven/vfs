@@ -39,6 +39,19 @@ func (Empty) List(path string) (vfs.ListerAt, error) {
 	return EmptyDirFile{}, nil
 }
 
+func (Empty) Walk(path string, walkFn vfs.WalkFunc) error {
+	if path != "/" {
+		return os.ErrNotExist
+	}
+
+	err := walkFn("/", EmptyDirStat{}, nil)
+	if err == vfs.SkipAll || err == vfs.SkipDir {
+		return nil
+	}
+
+	return err
+}
+
 func (Empty) Open(path string) (vfs.File, error) {
 	if path != "/" {
 		return nil, os.ErrNotExist
