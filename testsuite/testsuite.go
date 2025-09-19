@@ -45,8 +45,6 @@ func RunTestSuiteRO(t *testing.T, fs vfs.FS) {
 
 // RunTestSuiteRW runs comprehensive read-write tests for FS implementations
 func RunTestSuiteRW(t *testing.T, fs vfs.FS) {
-	RunTestSuiteRO(t, fs)
-
 	t.Run("FileOperations", func(t *testing.T) {
 		testFileOperations(t, fs)
 	})
@@ -78,6 +76,8 @@ func RunTestSuiteRW(t *testing.T, fs vfs.FS) {
 	t.Run("ExtendedAttributes", func(t *testing.T) {
 		testExtendedAttributes(t, fs)
 	})
+
+	RunTestSuiteRO(t, fs)
 }
 
 // RunTestSuiteAdvanced runs tests for advanced FS interfaces
@@ -468,8 +468,6 @@ func testAttributeOperations(t *testing.T, fs vfs.FS) {
 		t.Fatal(err)
 	}
 
-	defer fs.Remove(testFile) //nolint:errcheck
-
 	// Test getting initial file info
 	finfo, err := fs.Stat(testFile)
 	if err != nil {
@@ -487,8 +485,6 @@ func testPermissionOperations(t *testing.T, fs vfs.FS) {
 	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-
-	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Test chmod
 	if err := fs.Chmod(testFile, 0o644); err != nil {
@@ -508,8 +504,6 @@ func testTimeOperations(t *testing.T, fs vfs.FS) {
 	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-
-	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Test chtimes
 	newTime := time.Now().Add(-24 * time.Hour)
@@ -575,12 +569,6 @@ func testRenameOperations(t *testing.T, fs vfs.FS) {
 		t.Errorf("Renamed file has wrong content: expected '%s', got '%s'",
 			testContent, string(buf))
 	}
-
-	// Clean up
-	err = fs.Remove(newPath)
-	if err != nil {
-		t.Fatal(err)
-	}
 }
 
 func testTruncateOperations(t *testing.T, fs vfs.FS) {
@@ -591,8 +579,6 @@ func testTruncateOperations(t *testing.T, fs vfs.FS) {
 	if err := vfs.WriteFile(fs, testFile, []byte(originalContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-
-	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Truncate to smaller size
 	newSize := int64(10)
@@ -634,8 +620,6 @@ func testExtendedAttributes(t *testing.T, fs vfs.FS) {
 	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-
-	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Set extended attribute
 	if err := fs.SetExtendedAttr(testFile, attrName, attrValue); err != nil {
@@ -901,8 +885,6 @@ func testSetExtendedAttrsFS(t *testing.T, seafs vfs.SetExtendedAttrsFS) {
 	if err := vfs.WriteFile(seafs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-
-	defer seafs.Remove(testFile) //nolint:errcheck
 
 	// Set multiple extended attributes at once
 	attrs := vfs.Attributes{
