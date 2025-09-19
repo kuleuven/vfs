@@ -273,11 +273,7 @@ func (s *SFTP) SetExtendedAttrs(path string, attrs vfs.Attributes) error {
 
 var LookupPrefix = "lookup"
 
-var LookupEtagPrefix = "lookup-etag"
-
 var InodePrefix = "inode/"
-
-var EtagPrefix = "etag/"
 
 func (s *SFTP) Handle(path string) ([]byte, error) {
 	inodeStr, err := s.RealPath(LookupPrefix + path)
@@ -294,19 +290,6 @@ func (s *SFTP) Handle(path string) ([]byte, error) {
 
 func (s *SFTP) Path(handle []byte) (string, error) {
 	return s.RealPath(InodePrefix + hex.EncodeToString(handle))
-}
-
-func (s *SFTP) Etag(path string) (string, error) {
-	etagStr, err := s.RealPath(LookupEtagPrefix + path)
-	if err != nil {
-		return "", err
-	}
-
-	if !strings.HasPrefix(etagStr, EtagPrefix) {
-		return "", vfs.ErrNotSupported
-	}
-
-	return strings.TrimPrefix(etagStr, EtagPrefix), nil
 }
 
 type SFTPFile struct {
@@ -427,11 +410,11 @@ func (s *SFTPFileInfo) Sys() interface{} {
 	return s.sys
 }
 
-func (s *SFTPFileInfo) Uid() uint32 { //nolint:staticcheck
+func (s *SFTPFileInfo) Uid() uint32 {
 	return s.sys.UID
 }
 
-func (s *SFTPFileInfo) Gid() uint32 { //nolint:staticcheck
+func (s *SFTPFileInfo) Gid() uint32 {
 	return s.sys.GID
 }
 

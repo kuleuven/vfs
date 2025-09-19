@@ -852,36 +852,6 @@ func (r *Root) Path(handle []byte) (string, error) {
 	return "", os.ErrNotExist
 }
 
-var ErrRequiresEtagFS = errors.New("requires EtagFS")
-
-func (r *Root) Etag(path string) (string, error) {
-	r.Logger().Tracef("Etag(%q)", path)
-
-	// Etag needs to be propagated up to /
-	for _, m := range r.mounts {
-		if !m.Below(path) {
-			continue
-		}
-
-		// We cannot ask all possible submounts for their etag
-		// Return a rotating etag to put the burden on the client
-		return time.Now().Format(time.RFC3339Nano), nil
-	}
-
-	fs, path, err := r.FollowSymlinks(path)
-	if err != nil {
-		return "", err
-	}
-
-	etagFS, ok := fs.FS.(vfs.EtagFS)
-	if !ok {
-		// If the mount is not an EtagFS, return a rotating etag
-		return time.Now().Format(time.RFC3339Nano), nil
-	}
-
-	return etagFS.Etag(path)
-}
-
 func (r *Root) MkdirAll(path string, mode os.FileMode) error {
 	r.Logger().Debugf("MkdirAll(%q, %v)", path, mode)
 

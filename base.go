@@ -94,10 +94,6 @@ func (n NotImplementedAdvancedFS) Path(handle []byte) (string, error) {
 	return "", ErrNotImplemented
 }
 
-func (n NotImplementedAdvancedFS) Etag(path string) (string, error) {
-	return "", ErrNotImplemented
-}
-
 func (n NotImplementedAdvancedFS) Open(path string) (File, error) {
 	return nil, ErrNotImplemented
 }

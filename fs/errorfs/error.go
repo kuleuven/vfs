@@ -65,10 +65,6 @@ func (efs *ErrorFS) RealPath(path string) (string, error) {
 	return "", efs.Error
 }
 
-func (efs *ErrorFS) Etag(path string) (string, error) {
-	return "", efs.Error
-}
-
 func (efs *ErrorFS) Mount(path string, fs vfs.FS, index byte) error {
 	return efs.Error
 }

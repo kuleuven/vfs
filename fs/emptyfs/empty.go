@@ -76,14 +76,6 @@ func (Empty) Path(handle []byte) (string, error) {
 	return "/", nil
 }
 
-func (Empty) Etag(path string) (string, error) {
-	if path != "/" {
-		return "", os.ErrNotExist
-	}
-
-	return "never-changes", nil
-}
-
 type EmptyDirStat struct{}
 
 func (fi EmptyDirStat) Name() string {
@@ -125,11 +117,11 @@ func (fi EmptyDirStat) Permissions() (*vfs.Permissions, error) {
 	}, nil
 }
 
-func (fi EmptyDirStat) Uid() uint32 { //nolint:staticcheck
+func (fi EmptyDirStat) Uid() uint32 {
 	return 0
 }
 
-func (fi EmptyDirStat) Gid() uint32 { //nolint:staticcheck
+func (fi EmptyDirStat) Gid() uint32 {
 	return 0
 }
 

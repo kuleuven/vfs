@@ -19,7 +19,7 @@ func TestNativeFS(t *testing.T) {
 		}
 
 		// Allow parent dir
-		if os.Chmod(dir+"/..", 0775) != nil {
+		if os.Chmod(dir+"/..", 0o775) != nil {
 			return
 		}
 

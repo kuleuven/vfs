@@ -206,10 +206,6 @@ func (s *subdirAdvanced) Path(handle []byte) (string, error) {
 	return s.extractPath(path), nil
 }
 
-func (s *subdirAdvanced) Etag(path string) (string, error) {
-	return s.Parent.Etag(s.buildPath(path))
-}
-
 func (s *subdirAdvanced) OpenFile(path string, mode int, perm os.FileMode) (vfs.File, error) {
 	f, err := s.Parent.OpenFile(s.buildPath(path), mode, perm)
 	if err != nil {

@@ -205,16 +205,10 @@ type SetExtendedAttrsFS interface {
 	SetExtendedAttrs(path string, attrs Attributes) error
 }
 
-type EtagFS interface {
-	FS
-	Etag(path string) (string, error)
-}
-
 type AdvancedFS interface {
 	OpenFileFS
 	HandleResolveFS
 	SetExtendedAttrsFS
-	EtagFS
 }
 
 type AdvancedLinkFS interface {

@@ -1,6 +1,6 @@
 module github.com/kuleuven/vfs
 
-go 1.25.0
+go 1.24.0
 
 require (
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531
