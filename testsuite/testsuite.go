@@ -1,4 +1,4 @@
-package vfs
+package testsuite
 
 import (
 	"bytes"
@@ -8,10 +8,12 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/kuleuven/vfs"
 )
 
 // RunTestSuiteRO runs comprehensive read-only tests for FS implementations
-func RunTestSuiteRO(t *testing.T, fs FS) {
+func RunTestSuiteRO(t *testing.T, fs vfs.FS) {
 	t.Run("Stat", func(t *testing.T) {
 		testStat(t, fs)
 	})
@@ -42,7 +44,7 @@ func RunTestSuiteRO(t *testing.T, fs FS) {
 }
 
 // RunTestSuiteRW runs comprehensive read-write tests for FS implementations
-func RunTestSuiteRW(t *testing.T, fs FS) {
+func RunTestSuiteRW(t *testing.T, fs vfs.FS) {
 	RunTestSuiteRO(t, fs)
 
 	t.Run("FileOperations", func(t *testing.T) {
@@ -79,46 +81,46 @@ func RunTestSuiteRW(t *testing.T, fs FS) {
 }
 
 // RunTestSuiteAdvanced runs tests for advanced FS interfaces
-func RunTestSuiteAdvanced(t *testing.T, fs FS) {
+func RunTestSuiteAdvanced(t *testing.T, fs vfs.FS) {
 	RunTestSuiteRW(t, fs)
 
-	if hfs, ok := fs.(HandleFS); ok {
+	if hfs, ok := fs.(vfs.HandleFS); ok {
 		t.Run("HandleFS", func(t *testing.T) {
 			testHandleFS(t, hfs)
 		})
 	}
 
-	if hrfs, ok := fs.(HandleResolveFS); ok {
+	if hrfs, ok := fs.(vfs.HandleResolveFS); ok {
 		t.Run("HandleResolveFS", func(t *testing.T) {
 			testHandleResolveFS(t, hrfs)
 		})
 	}
 
-	if offs, ok := fs.(OpenFileFS); ok {
+	if offs, ok := fs.(vfs.OpenFileFS); ok {
 		t.Run("OpenFileFS", func(t *testing.T) {
 			testOpenFileFS(t, offs)
 		})
 	}
 
-	if sfs, ok := fs.(SymlinkFS); ok {
+	if sfs, ok := fs.(vfs.SymlinkFS); ok {
 		t.Run("SymlinkFS", func(t *testing.T) {
 			testSymlinkFS(t, sfs)
 		})
 	}
 
-	if lfs, ok := fs.(LinkFS); ok {
+	if lfs, ok := fs.(vfs.LinkFS); ok {
 		t.Run("LinkFS", func(t *testing.T) {
 			testLinkFS(t, lfs)
 		})
 	}
 
-	if wfs, ok := fs.(WalkFS); ok {
+	if wfs, ok := fs.(vfs.WalkFS); ok {
 		t.Run("WalkFS", func(t *testing.T) {
 			testWalkFS(t, wfs)
 		})
 	}
 
-	if seafs, ok := fs.(SetExtendedAttrsFS); ok {
+	if seafs, ok := fs.(vfs.SetExtendedAttrsFS); ok {
 		t.Run("SetExtendedAttrsFS", func(t *testing.T) {
 			testSetExtendedAttrsFS(t, seafs)
 		})
@@ -127,7 +129,7 @@ func RunTestSuiteAdvanced(t *testing.T, fs FS) {
 
 // Individual test functions
 
-func testStat(t *testing.T, fs FS) {
+func testStat(t *testing.T, fs vfs.FS) {
 	finfo, err := fs.Stat("/")
 	if err != nil {
 		t.Fatal(err)
@@ -155,14 +157,14 @@ func testStat(t *testing.T, fs FS) {
 	}
 }
 
-func testStatNonExistent(t *testing.T, fs FS) {
+func testStatNonExistent(t *testing.T, fs vfs.FS) {
 	_, err := fs.Stat("/nonexistent/path/that/should/not/exist")
 	if err == nil {
 		t.Error("Expected error for non-existent path")
 	}
 }
 
-func testList(t *testing.T, fs FS) {
+func testList(t *testing.T, fs vfs.FS) {
 	lister, err := fs.List("/")
 	if err != nil {
 		t.Fatal(err)
@@ -170,7 +172,7 @@ func testList(t *testing.T, fs FS) {
 
 	defer lister.Close()
 
-	buf := make([]FileInfo, 10)
+	buf := make([]vfs.FileInfo, 10)
 
 	n, err := lister.ListAt(buf, 0)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -185,7 +187,7 @@ func testList(t *testing.T, fs FS) {
 
 	// Test listing with different buffer sizes
 	if n > 0 {
-		smallBuf := make([]FileInfo, 1)
+		smallBuf := make([]vfs.FileInfo, 1)
 		count := 0
 		offset := int64(0)
 
@@ -213,17 +215,17 @@ func testList(t *testing.T, fs FS) {
 	}
 }
 
-func testListNonExistent(t *testing.T, fs FS) {
+func testListNonExistent(t *testing.T, fs vfs.FS) {
 	_, err := fs.List("/nonexistent/directory")
 	if err == nil {
 		t.Error("Expected error for non-existent directory")
 	}
 }
 
-func testWalk(t *testing.T, fs FS) {
+func testWalk(t *testing.T, fs vfs.FS) {
 	var paths []string
 
-	err := Walk(fs, "/", func(path string, info FileInfo, err error) error {
+	err := vfs.Walk(fs, "/", func(path string, info vfs.FileInfo, err error) error {
 		if err != nil {
 			t.Logf("Walk error at %s: %v", path, err)
 			return err
@@ -243,7 +245,7 @@ func testWalk(t *testing.T, fs FS) {
 	}
 }
 
-func testFileReadExisting(t *testing.T, fs FS) {
+func testFileReadExisting(t *testing.T, fs vfs.FS) {
 	// This test assumes there's at least one readable file in the filesystem
 	// In a real test, you might want to create a file first or skip if no files exist
 	lister, err := fs.List("/")
@@ -253,7 +255,7 @@ func testFileReadExisting(t *testing.T, fs FS) {
 
 	defer lister.Close()
 
-	buf := make([]FileInfo, 100)
+	buf := make([]vfs.FileInfo, 100)
 
 	n, err := lister.ListAt(buf, 0)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -285,14 +287,14 @@ func testFileReadExisting(t *testing.T, fs FS) {
 	t.Skip("No readable files found for testing")
 }
 
-func testFileReadNonExistent(t *testing.T, fs FS) {
+func testFileReadNonExistent(t *testing.T, fs vfs.FS) {
 	_, err := fs.FileRead("/nonexistent/file.txt")
 	if err == nil {
 		t.Error("Expected error for non-existent file")
 	}
 }
 
-func testFileOperations(t *testing.T, fs FS) { //nolint:funlen
+func testFileOperations(t *testing.T, fs vfs.FS) { //nolint:funlen
 	testPath := "/test_file_operations.txt"
 	testContent := "Hello, VFS World! This is a test file."
 
@@ -377,7 +379,7 @@ func testFileOperations(t *testing.T, fs FS) { //nolint:funlen
 	}
 }
 
-func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
+func testDirectoryOperations(t *testing.T, fs vfs.FS) { //nolint:funlen
 	testDir := "/test_directory"
 
 	// Create directory
@@ -399,7 +401,7 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 	// Test nested directory creation
 	nestedDir := testDir + "/nested/deep"
 
-	err = MkdirAll(fs, nestedDir, 0o755)
+	err = vfs.MkdirAll(fs, nestedDir, 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -428,7 +430,7 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 		t.Fatal(err)
 	}
 
-	buf := make([]FileInfo, 10)
+	buf := make([]vfs.FileInfo, 10)
 
 	n, err := lister.ListAt(buf, 0)
 	if err != nil && !errors.Is(err, io.EOF) {
@@ -452,17 +454,17 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 	}
 
 	// Clean up
-	err = RemoveAll(fs, testFile)
+	err = vfs.RemoveAll(fs, testFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 }
 
-func testAttributeOperations(t *testing.T, fs FS) {
+func testAttributeOperations(t *testing.T, fs vfs.FS) {
 	testFile := "/test_attributes.txt"
 
 	// Create test file
-	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -478,11 +480,11 @@ func testAttributeOperations(t *testing.T, fs FS) {
 		finfo.Uid(), finfo.Gid(), finfo.NumLinks())
 }
 
-func testPermissionOperations(t *testing.T, fs FS) {
+func testPermissionOperations(t *testing.T, fs vfs.FS) {
 	testFile := "/test_permissions.txt"
 
 	// Create test file
-	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -499,11 +501,11 @@ func testPermissionOperations(t *testing.T, fs FS) {
 	}
 }
 
-func testTimeOperations(t *testing.T, fs FS) {
+func testTimeOperations(t *testing.T, fs vfs.FS) {
 	testFile := "/test_times.txt"
 
 	// Create test file
-	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -532,13 +534,13 @@ func testTimeOperations(t *testing.T, fs FS) {
 	}
 }
 
-func testRenameOperations(t *testing.T, fs FS) {
+func testRenameOperations(t *testing.T, fs vfs.FS) {
 	oldPath := "/test_rename_old.txt"
 	newPath := "/test_rename_new.txt"
 	testContent := "rename test content"
 
 	// Create test file
-	if err := WriteFile(fs, oldPath, []byte(testContent), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(fs, oldPath, []byte(testContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -564,7 +566,7 @@ func testRenameOperations(t *testing.T, fs FS) {
 	}
 
 	// Read content to verify
-	buf, err := ReadFile(fs, newPath)
+	buf, err := vfs.ReadFile(fs, newPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -581,12 +583,12 @@ func testRenameOperations(t *testing.T, fs FS) {
 	}
 }
 
-func testTruncateOperations(t *testing.T, fs FS) {
+func testTruncateOperations(t *testing.T, fs vfs.FS) {
 	testFile := "/test_truncate.txt"
 	originalContent := "This is a long test content that will be truncated"
 
 	// Create test file
-	if err := WriteFile(fs, testFile, []byte(originalContent), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(fs, testFile, []byte(originalContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -611,7 +613,7 @@ func testTruncateOperations(t *testing.T, fs FS) {
 	}
 
 	// Verify content
-	buf, err := ReadFile(fs, testFile)
+	buf, err := vfs.ReadFile(fs, testFile)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -623,13 +625,13 @@ func testTruncateOperations(t *testing.T, fs FS) {
 	}
 }
 
-func testExtendedAttributes(t *testing.T, fs FS) {
+func testExtendedAttributes(t *testing.T, fs vfs.FS) {
 	testFile := "/test_xattrs.txt"
 	attrName := "user.test"
 	attrValue := []byte("test value")
 
 	// Create test file
-	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -668,7 +670,7 @@ func testExtendedAttributes(t *testing.T, fs FS) {
 
 // Tests for advanced interfaces
 
-func testHandleFS(t *testing.T, hfs HandleFS) {
+func testHandleFS(t *testing.T, hfs vfs.HandleFS) {
 	handle, err := hfs.Handle("/")
 	if err != nil {
 		t.Fatal(err)
@@ -681,7 +683,7 @@ func testHandleFS(t *testing.T, hfs HandleFS) {
 	t.Logf("Root handle: %x", handle)
 }
 
-func testHandleResolveFS(t *testing.T, hrfs HandleResolveFS) {
+func testHandleResolveFS(t *testing.T, hrfs vfs.HandleResolveFS) {
 	handle, err := hrfs.Handle("/")
 	if err != nil {
 		t.Fatal(err)
@@ -697,7 +699,7 @@ func testHandleResolveFS(t *testing.T, hrfs HandleResolveFS) {
 	}
 }
 
-func testOpenFileFS(t *testing.T, offs OpenFileFS) {
+func testOpenFileFS(t *testing.T, offs vfs.OpenFileFS) {
 	testFile := "/test_openfile.txt"
 	testContent := "OpenFile test content"
 
@@ -745,12 +747,12 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 	}
 }
 
-func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
+func testSymlinkFS(t *testing.T, sfs vfs.SymlinkFS) {
 	target := "/test_symlink_target.txt"
 	link := "/test_symlink.txt"
 
 	// Create test file
-	if err := WriteFile(sfs, target, []byte("test content"), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(sfs, target, []byte("test content"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -800,13 +802,13 @@ func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
 	}
 }
 
-func testLinkFS(t *testing.T, lfs LinkFS) {
+func testLinkFS(t *testing.T, lfs vfs.LinkFS) {
 	original := "/test_link_original.txt"
 	hardlink := "/test_hardlink.txt"
 	testContent := "hard link test content"
 
 	// Create original file
-	if err := WriteFile(lfs, original, []byte(testContent), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(lfs, original, []byte(testContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
@@ -817,12 +819,12 @@ func testLinkFS(t *testing.T, lfs LinkFS) {
 	}
 
 	// Both files should have the same content
-	c1, err := ReadFile(lfs, original)
+	c1, err := vfs.ReadFile(lfs, original)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	c2, err := ReadFile(lfs, hardlink)
+	c2, err := vfs.ReadFile(lfs, hardlink)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -849,10 +851,10 @@ func testLinkFS(t *testing.T, lfs LinkFS) {
 	}
 }
 
-func testWalkFS(t *testing.T, wfs WalkFS) {
+func testWalkFS(t *testing.T, wfs vfs.WalkFS) {
 	var paths []string
 
-	err := wfs.Walk("/", func(path string, info FileInfo, err error) error {
+	err := wfs.Walk("/", func(path string, info vfs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -873,7 +875,7 @@ func testWalkFS(t *testing.T, wfs WalkFS) {
 	// Test walk with early termination
 	count := 0
 	maxCount := 3
-	err = wfs.Walk("/", func(path string, info FileInfo, err error) error {
+	err = wfs.Walk("/", func(path string, info vfs.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -892,18 +894,18 @@ func testWalkFS(t *testing.T, wfs WalkFS) {
 	}
 }
 
-func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
+func testSetExtendedAttrsFS(t *testing.T, seafs vfs.SetExtendedAttrsFS) {
 	testFile := "/test_set_xattrs.txt"
 
 	// Create test file
-	if err := WriteFile(seafs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
+	if err := vfs.WriteFile(seafs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
 
 	defer seafs.Remove(testFile) //nolint:errcheck
 
 	// Set multiple extended attributes at once
-	attrs := Attributes{
+	attrs := vfs.Attributes{
 		"user.test1": []byte("value1"),
 		"user.test2": []byte("value2"),
 		"user.test3": []byte("value3"),
