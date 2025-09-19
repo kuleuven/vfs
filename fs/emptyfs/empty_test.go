@@ -7,5 +7,5 @@ import (
 )
 
 func TestEmptyFS(t *testing.T) {
-	vfs.RunTestSuite(t, New())
+	vfs.RunTestSuiteRO(t, New())
 }
