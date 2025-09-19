@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -166,15 +167,18 @@ func testList(t *testing.T, fs FS) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	defer lister.Close()
 
 	buf := make([]FileInfo, 10)
+
 	n, err := lister.ListAt(buf, 0)
 	if err != nil && !errors.Is(err, io.EOF) {
 		t.Fatal(err)
 	}
 
 	t.Logf("Found %d entries in root directory", n)
+
 	for i, finfo := range buf[:n] {
 		t.Logf("  [%d] %s (dir: %v, size: %d)", i, finfo.Name(), finfo.IsDir(), finfo.Size())
 	}
@@ -190,11 +194,14 @@ func testList(t *testing.T, fs FS) {
 			if m == 0 {
 				break
 			}
+
 			count += m
 			offset += int64(m)
+
 			if errors.Is(err, io.EOF) {
 				break
 			}
+
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -215,13 +222,16 @@ func testListNonExistent(t *testing.T, fs FS) {
 
 func testWalk(t *testing.T, fs FS) {
 	var paths []string
+
 	err := Walk(fs, "/", func(path string, info FileInfo, err error) error {
 		if err != nil {
 			t.Logf("Walk error at %s: %v", path, err)
 			return err
 		}
+
 		paths = append(paths, path)
 		t.Logf("Walk: %s (dir: %v)", path, info.IsDir())
+
 		return nil
 	})
 	if err != nil {
@@ -238,23 +248,37 @@ func testFileReadExisting(t *testing.T, fs FS) {
 	// In a real test, you might want to create a file first or skip if no files exist
 	lister, err := fs.List("/")
 	if err != nil {
-		t.Skip("Cannot list root directory")
+		t.Fatal(err)
 	}
+
 	defer lister.Close()
 
 	buf := make([]FileInfo, 100)
-	n, _ := lister.ListAt(buf, 0)
+
+	n, err := lister.ListAt(buf, 0)
+	if err != nil && !errors.Is(err, io.EOF) {
+		t.Fatal(err)
+	}
 
 	for _, finfo := range buf[:n] {
 		if !finfo.IsDir() {
 			fr, err := fs.FileRead("/" + finfo.Name())
 			if err == nil {
 				defer fr.Close()
+
 				readBuf := make([]byte, 1024)
-				readN, _ := fr.ReadAt(readBuf, 0)
+
+				readN, err := fr.ReadAt(readBuf, 0)
+				if err != nil && !errors.Is(err, io.EOF) {
+					t.Fatal(err)
+				}
+
 				t.Logf("Read %d bytes from %s", readN, finfo.Name())
+
 				return
 			}
+
+			t.Error(err)
 		}
 	}
 
@@ -268,7 +292,7 @@ func testFileReadNonExistent(t *testing.T, fs FS) {
 	}
 }
 
-func testFileOperations(t *testing.T, fs FS) {
+func testFileOperations(t *testing.T, fs FS) { //nolint:funlen
 	testPath := "/test_file_operations.txt"
 	testContent := "Hello, VFS World! This is a test file."
 
@@ -309,6 +333,7 @@ func testFileOperations(t *testing.T, fs FS) {
 	}
 
 	readBuf := make([]byte, len(testContent)+10)
+
 	readN, err := fr.ReadAt(readBuf, 0)
 	if err != nil && !errors.Is(err, io.EOF) {
 		t.Fatal(err)
@@ -334,6 +359,7 @@ func testFileOperations(t *testing.T, fs FS) {
 	}
 
 	appendContent := " Appended text."
+
 	_, err = fw2.WriteAt([]byte(appendContent), int64(len(testContent)))
 	if err != nil {
 		t.Fatal(err)
@@ -351,11 +377,11 @@ func testFileOperations(t *testing.T, fs FS) {
 	}
 }
 
-func testDirectoryOperations(t *testing.T, fs FS) {
+func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 	testDir := "/test_directory"
 
 	// Create directory
-	err := fs.Mkdir(testDir, 0755)
+	err := fs.Mkdir(testDir, 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -373,19 +399,28 @@ func testDirectoryOperations(t *testing.T, fs FS) {
 	// Test nested directory creation
 	nestedDir := testDir + "/nested/deep"
 
-	err = MkdirAll(fs, nestedDir, 0755)
+	err = MkdirAll(fs, nestedDir, 0o755)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Create a file in the directory
 	testFile := testDir + "/test_file.txt"
+
 	fw, err := fs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("test"), 0)
-	fw.Close()
+
+	_, err = fw.WriteAt([]byte("test"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = fw.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// List directory contents
 	lister, err := fs.List(testDir)
@@ -394,12 +429,19 @@ func testDirectoryOperations(t *testing.T, fs FS) {
 	}
 
 	buf := make([]FileInfo, 10)
-	n, _ := lister.ListAt(buf, 0)
+
+	n, err := lister.ListAt(buf, 0)
+	if err != nil && !errors.Is(err, io.EOF) {
+		t.Fatal(err)
+	}
+
 	lister.Close()
 
 	found := false
+
 	for _, finfo := range buf[:n] {
 		t.Logf("Directory content: %s", finfo.Name())
+
 		if finfo.Name() == "test_file.txt" {
 			found = true
 		}
@@ -410,20 +452,21 @@ func testDirectoryOperations(t *testing.T, fs FS) {
 	}
 
 	// Clean up
-	fs.Remove(testFile)
-	fs.Rmdir(testDir)
+	err = RemoveAll(fs, testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testAttributeOperations(t *testing.T, fs FS) {
 	testFile := "/test_attributes.txt"
 
 	// Create test file
-	fw, err := fs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("test"), 0)
-	fw.Close()
+
+	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Test getting initial file info
 	finfo, err := fs.Stat(testFile)
@@ -433,70 +476,60 @@ func testAttributeOperations(t *testing.T, fs FS) {
 
 	t.Logf("Initial file info: uid=%d, gid=%d, links=%d",
 		finfo.Uid(), finfo.Gid(), finfo.NumLinks())
-
-	// Clean up
-	fs.Remove(testFile)
 }
 
 func testPermissionOperations(t *testing.T, fs FS) {
 	testFile := "/test_permissions.txt"
 
 	// Create test file
-	fw, err := fs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("test"), 0)
-	fw.Close()
+
+	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Test chmod
-	err = fs.Chmod(testFile, 0644)
-	if err != nil {
+	if err := fs.Chmod(testFile, 0o644); err != nil {
 		t.Logf("Chmod not supported or failed: %v", err)
 	}
 
 	// Test chown (might not be supported in many implementations)
-	err = fs.Chown(testFile, 1000, 1000)
-	if err != nil {
+	if err := fs.Chown(testFile, 1000, 1000); err != nil {
 		t.Logf("Chown not supported or failed: %v", err)
 	}
-
-	// Clean up
-	fs.Remove(testFile)
 }
 
 func testTimeOperations(t *testing.T, fs FS) {
 	testFile := "/test_times.txt"
 
 	// Create test file
-	fw, err := fs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("test"), 0)
-	fw.Close()
+
+	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Test chtimes
 	newTime := time.Now().Add(-24 * time.Hour)
-	err = fs.Chtimes(testFile, newTime, newTime)
-	if err != nil {
+
+	if err := fs.Chtimes(testFile, newTime, newTime); err != nil {
 		t.Logf("Chtimes not supported or failed: %v", err)
-	} else {
-		// Verify the time was set
-		finfo, err := fs.Stat(testFile)
-		if err == nil {
-			if !finfo.ModTime().Equal(newTime) {
-				// Allow for some precision loss
-				diff := finfo.ModTime().Sub(newTime)
-				if diff > time.Second && diff < -time.Second {
-					t.Errorf("Expected mtime %v, got %v", newTime, finfo.ModTime())
-				}
-			}
-		}
+		return
 	}
 
-	// Clean up
-	fs.Remove(testFile)
+	// Verify the time was set
+	finfo, err := fs.Stat(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !finfo.ModTime().Equal(newTime) {
+		// Allow for some precision loss
+		diff := finfo.ModTime().Sub(newTime)
+		if diff > time.Second && diff < -time.Second {
+			t.Errorf("Expected mtime %v, got %v", newTime, finfo.ModTime())
+		}
+	}
 }
 
 func testRenameOperations(t *testing.T, fs FS) {
@@ -505,22 +538,17 @@ func testRenameOperations(t *testing.T, fs FS) {
 	testContent := "rename test content"
 
 	// Create test file
-	fw, err := fs.FileWrite(oldPath, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(fs, oldPath, []byte(testContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte(testContent), 0)
-	fw.Close()
 
 	// Rename file
-	err = fs.Rename(oldPath, newPath)
-	if err != nil {
+	if err := fs.Rename(oldPath, newPath); err != nil {
 		t.Fatal(err)
 	}
 
 	// Verify old path doesn't exist
-	_, err = fs.Stat(oldPath)
-	if err == nil {
+	if _, err := fs.Stat(oldPath); err == nil {
 		t.Error("Old path should not exist after rename")
 	}
 
@@ -536,22 +564,21 @@ func testRenameOperations(t *testing.T, fs FS) {
 	}
 
 	// Read content to verify
-	fr, err := fs.FileRead(newPath)
+	buf, err := ReadFile(fs, newPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	buf := make([]byte, len(testContent))
-	n, _ := fr.ReadAt(buf, 0)
-	fr.Close()
-
-	if string(buf[:n]) != testContent {
+	if string(buf) != testContent {
 		t.Errorf("Renamed file has wrong content: expected '%s', got '%s'",
-			testContent, string(buf[:n]))
+			testContent, string(buf))
 	}
 
 	// Clean up
-	fs.Remove(newPath)
+	err = fs.Remove(newPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testTruncateOperations(t *testing.T, fs FS) {
@@ -559,16 +586,16 @@ func testTruncateOperations(t *testing.T, fs FS) {
 	originalContent := "This is a long test content that will be truncated"
 
 	// Create test file
-	fw, err := fs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(fs, testFile, []byte(originalContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte(originalContent), 0)
-	fw.Close()
+
+	defer fs.Remove(testFile) //nolint:errcheck
 
 	// Truncate to smaller size
 	newSize := int64(10)
-	err = fs.Truncate(testFile, newSize)
+
+	err := fs.Truncate(testFile, newSize)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -584,23 +611,16 @@ func testTruncateOperations(t *testing.T, fs FS) {
 	}
 
 	// Verify content
-	fr, err := fs.FileRead(testFile)
+	buf, err := ReadFile(fs, testFile)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	buf := make([]byte, newSize)
-	n, _ := fr.ReadAt(buf, 0)
-	fr.Close()
-
 	expectedContent := originalContent[:newSize]
-	if string(buf[:n]) != expectedContent {
+	if string(buf) != expectedContent {
 		t.Errorf("Expected truncated content '%s', got '%s'",
-			expectedContent, string(buf[:n]))
+			expectedContent, string(buf))
 	}
-
-	// Clean up
-	fs.Remove(testFile)
 }
 
 func testExtendedAttributes(t *testing.T, fs FS) {
@@ -609,42 +629,41 @@ func testExtendedAttributes(t *testing.T, fs FS) {
 	attrValue := []byte("test value")
 
 	// Create test file
-	fw, err := fs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
+	if err := WriteFile(fs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
+		t.Fatal(err)
+	}
+
+	defer fs.Remove(testFile) //nolint:errcheck
+
+	// Set extended attribute
+	if err := fs.SetExtendedAttr(testFile, attrName, attrValue); err != nil {
+		t.Logf("SetExtendedAttr not supported or failed: %v", err)
+
+		return
+	}
+
+	// Try to read back the attribute
+	finfo, err := fs.Stat(testFile)
 	if err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("test"), 0)
-	fw.Close()
 
-	// Set extended attribute
-	err = fs.SetExtendedAttr(testFile, attrName, attrValue)
-	if err != nil {
-		t.Logf("SetExtendedAttr not supported or failed: %v", err)
-	} else {
-		// Try to read back the attribute
-		finfo, err := fs.Stat(testFile)
-		if err == nil {
-			if attrs, err := finfo.Extended(); err == nil {
-				if value, ok := attrs.Get(attrName); ok {
-					if string(value) != string(attrValue) {
-						t.Errorf("Expected xattr value '%s', got '%s'",
-							string(attrValue), string(value))
-					}
-				} else {
-					t.Error("Extended attribute not found after setting")
-				}
+	if attrs, err := finfo.Extended(); err == nil {
+		if value, ok := attrs.Get(attrName); ok {
+			if !bytes.Equal(value, attrValue) {
+				t.Errorf("Expected xattr value '%s', got '%s'",
+					string(attrValue), string(value))
 			}
-		}
-
-		// Unset extended attribute
-		err = fs.UnsetExtendedAttr(testFile, attrName)
-		if err != nil {
-			t.Logf("UnsetExtendedAttr failed: %v", err)
+		} else {
+			t.Error("Extended attribute not found after setting")
 		}
 	}
 
-	// Clean up
-	fs.Remove(testFile)
+	// Unset extended attribute
+	err = fs.UnsetExtendedAttr(testFile, attrName)
+	if err != nil {
+		t.Logf("UnsetExtendedAttr failed: %v", err)
+	}
 }
 
 // Tests for advanced interfaces
@@ -683,7 +702,7 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 	testContent := "OpenFile test content"
 
 	// Create and write using OpenFile
-	file, err := offs.OpenFile(testFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := offs.OpenFile(testFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -709,6 +728,7 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 	}
 
 	buf := make([]byte, len(testContent))
+
 	readN, err := file2.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
 		t.Fatal(err)
@@ -720,24 +740,22 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 
 	file2.Close()
 
-	// Clean up
-	offs.Remove(testFile)
+	if err = offs.Remove(testFile); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
 	target := "/test_symlink_target.txt"
 	link := "/test_symlink.txt"
 
-	// Create target file
-	fw, err := sfs.FileWrite(target, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	// Create test file
+	if err := WriteFile(sfs, target, []byte("test content"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("target content"), 0)
-	fw.Close()
 
 	// Create symlink
-	err = sfs.Symlink(target, link)
+	err := sfs.Symlink(target, link)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -773,8 +791,13 @@ func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
 	}
 
 	// Clean up
-	sfs.Remove(link)
-	sfs.Remove(target)
+	if err = sfs.Remove(link); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := sfs.Remove(target); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testLinkFS(t *testing.T, lfs LinkFS) {
@@ -783,40 +806,28 @@ func testLinkFS(t *testing.T, lfs LinkFS) {
 	testContent := "hard link test content"
 
 	// Create original file
-	fw, err := lfs.FileWrite(original, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(lfs, original, []byte(testContent), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte(testContent), 0)
-	fw.Close()
 
 	// Create hard link
-	err = lfs.Link(original, hardlink)
+	err := lfs.Link(original, hardlink)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Both files should have the same content
-	fr1, err := lfs.FileRead(original)
+	c1, err := ReadFile(lfs, original)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	fr2, err := lfs.FileRead(hardlink)
+	c2, err := ReadFile(lfs, hardlink)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	buf1 := make([]byte, len(testContent))
-	buf2 := make([]byte, len(testContent))
-
-	n1, _ := fr1.ReadAt(buf1, 0)
-	n2, _ := fr2.ReadAt(buf2, 0)
-
-	fr1.Close()
-	fr2.Close()
-
-	if string(buf1[:n1]) != string(buf2[:n2]) {
+	if !bytes.Equal(c1, c2) {
 		t.Error("Hard linked files should have identical content")
 	}
 
@@ -829,21 +840,28 @@ func testLinkFS(t *testing.T, lfs LinkFS) {
 	}
 
 	// Clean up
-	lfs.Remove(hardlink)
-	lfs.Remove(original)
+	if err := lfs.Remove(hardlink); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := lfs.Remove(original); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testWalkFS(t *testing.T, wfs WalkFS) {
 	var paths []string
+
 	err := wfs.Walk("/", func(path string, info FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+
 		paths = append(paths, path)
 		t.Logf("WalkFS: %s (dir: %v)", path, info.IsDir())
+
 		return nil
 	})
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -859,10 +877,12 @@ func testWalkFS(t *testing.T, wfs WalkFS) {
 		if err != nil {
 			return err
 		}
+
 		count++
 		if count >= maxCount {
 			return filepath.SkipDir
 		}
+
 		return nil
 	})
 
@@ -876,12 +896,11 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 	testFile := "/test_set_xattrs.txt"
 
 	// Create test file
-	fw, err := seafs.FileWrite(testFile, os.O_CREATE|os.O_WRONLY)
-	if err != nil {
+	if err := WriteFile(seafs, testFile, []byte("test"), os.O_CREATE|os.O_WRONLY); err != nil {
 		t.Fatal(err)
 	}
-	fw.WriteAt([]byte("test"), 0)
-	fw.Close()
+
+	defer seafs.Remove(testFile) //nolint:errcheck
 
 	// Set multiple extended attributes at once
 	attrs := Attributes{
@@ -890,28 +909,32 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 		"user.test3": []byte("value3"),
 	}
 
-	err = seafs.SetExtendedAttrs(testFile, attrs)
+	err := seafs.SetExtendedAttrs(testFile, attrs)
 	if err != nil {
 		t.Logf("SetExtendedAttrs not supported or failed: %v", err)
-	} else {
-		// Verify attributes were set
-		finfo, err := seafs.Stat(testFile)
-		if err == nil {
-			if readAttrs, err := finfo.Extended(); err == nil {
-				for name, expectedValue := range attrs {
-					if actualValue, ok := readAttrs.Get(name); ok {
-						if string(actualValue) != string(expectedValue) {
-							t.Errorf("Attribute %s: expected '%s', got '%s'",
-								name, string(expectedValue), string(actualValue))
-						}
-					} else {
-						t.Errorf("Attribute %s not found after batch set", name)
-					}
-				}
-			}
-		}
+
+		return
 	}
 
-	// Clean up
-	seafs.Remove(testFile)
+	// Verify attributes were set
+	finfo, err := seafs.Stat(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	readAttrs, err := finfo.Extended()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for name, expectedValue := range attrs {
+		if actualValue, ok := readAttrs.Get(name); ok {
+			if !bytes.Equal(actualValue, expectedValue) {
+				t.Errorf("Attribute %s: expected '%s', got '%s'",
+					name, string(expectedValue), string(actualValue))
+			}
+		} else {
+			t.Errorf("Attribute %s not found after batch set", name)
+		}
+	}
 }

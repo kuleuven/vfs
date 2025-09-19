@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"errors"
 	"io"
 	"os"
 
@@ -8,7 +9,18 @@ import (
 	"github.com/kuleuven/vfs/io/writerat"
 )
 
-func ReadFile(fs FS, path string) (io.ReadSeekCloser, error) {
+func ReadFile(fs FS, path string) ([]byte, error) {
+	f, err := FileReadSeekCloser(fs, path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	return io.ReadAll(f)
+}
+
+func FileReadSeekCloser(fs FS, path string) (io.ReadSeekCloser, error) {
 	readerAt, err := fs.FileRead(path)
 	if err != nil {
 		return nil, err
@@ -25,8 +37,28 @@ func ReadFile(fs FS, path string) (io.ReadSeekCloser, error) {
 	}, nil
 }
 
-func WriteFile(fs FS, path string) (io.WriteCloser, error) {
-	writerAt, err := fs.FileWrite(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC)
+func WriteFile(fs FS, path string, data []byte, flags int) error {
+	f, err := FileWriteCloser(fs, path, flags)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close()
+
+	for len(data) > 0 {
+		n, err := f.Write(data)
+		if err != nil && !errors.Is(err, io.ErrShortWrite) {
+			return err
+		}
+
+		data = data[n:]
+	}
+
+	return nil
+}
+
+func FileWriteCloser(fs FS, path string, flags int) (io.WriteCloser, error) {
+	writerAt, err := fs.FileWrite(path, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +74,7 @@ func WriteFile(fs FS, path string) (io.WriteCloser, error) {
 	}, nil
 }
 
-func WriteFileExclusive(fs FS, path string) (io.WriteCloser, error) {
+func FileExclusiveWriteCloser(fs FS, path string) (io.WriteCloser, error) {
 	writerAt, err := fs.FileWrite(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL)
 	if err != nil {
 		return nil, err
