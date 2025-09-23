@@ -30,7 +30,7 @@ func TestRootNativeFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	vfs.RunTestSuiteAdvanced(t, root)
+	vfs.RunTestSuiteRW(t, root)
 }
 
 func TestRootNativeFSServerInodes(t *testing.T) {
@@ -54,5 +54,5 @@ func TestRootNativeFSServerInodes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	vfs.RunTestSuiteAdvanced(t, root)
+	vfs.RunTestSuiteRW(t, root)
 }

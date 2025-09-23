@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"errors"
 	"io"
 )
 
@@ -25,4 +26,28 @@ func (f FileInfoListerAt) ListAt(ls []FileInfo, offset int64) (int, error) {
 
 func (f FileInfoListerAt) Close() error {
 	return nil
+}
+
+func ListAll(lister ListerAt) ([]FileInfo, error) {
+	buf := make([]FileInfo, 100)
+
+	var (
+		result []FileInfo
+		offset int64
+	)
+
+	for {
+		n, err := lister.ListAt(buf, offset)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return nil, err
+		}
+
+		result = append(result, buf[:n]...)
+
+		if errors.Is(err, io.EOF) {
+			return result, nil
+		}
+
+		offset += int64(n)
+	}
 }

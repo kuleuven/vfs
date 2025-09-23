@@ -39,6 +39,30 @@ func RunTestSuiteRO(t *testing.T, fs FS) {
 	t.Run("FileReadNonExistent", func(t *testing.T) {
 		testFileReadNonExistent(t, fs)
 	})
+
+	if hfs, ok := fs.(HandleFS); ok {
+		t.Run("HandleFS", func(t *testing.T) {
+			testHandleFS(t, hfs)
+		})
+	}
+
+	if hrfs, ok := fs.(HandleResolveFS); ok {
+		t.Run("HandleResolveFS", func(t *testing.T) {
+			testHandleResolveFS(t, hrfs)
+		})
+	}
+
+	if wfs, ok := fs.(WalkFS); ok {
+		t.Run("WalkFS", func(t *testing.T) {
+			testWalkFS(t, wfs)
+		})
+	}
+
+	if rfs, ok := fs.(RootFS); ok {
+		t.Run("Open", func(t *testing.T) {
+			testRootFSOpen(t, rfs)
+		})
+	}
 }
 
 // RunTestSuiteRW runs comprehensive read-write tests for FS implementations
@@ -75,25 +99,6 @@ func RunTestSuiteRW(t *testing.T, fs FS) {
 		testExtendedAttributes(t, fs)
 	})
 
-	RunTestSuiteRO(t, fs)
-}
-
-// RunTestSuiteAdvanced runs tests for advanced FS interfaces
-func RunTestSuiteAdvanced(t *testing.T, fs FS) {
-	RunTestSuiteRW(t, fs)
-
-	if hfs, ok := fs.(HandleFS); ok {
-		t.Run("HandleFS", func(t *testing.T) {
-			testHandleFS(t, hfs)
-		})
-	}
-
-	if hrfs, ok := fs.(HandleResolveFS); ok {
-		t.Run("HandleResolveFS", func(t *testing.T) {
-			testHandleResolveFS(t, hrfs)
-		})
-	}
-
 	if offs, ok := fs.(OpenFileFS); ok {
 		t.Run("OpenFileFS", func(t *testing.T) {
 			testOpenFileFS(t, offs)
@@ -112,23 +117,13 @@ func RunTestSuiteAdvanced(t *testing.T, fs FS) {
 		})
 	}
 
-	if wfs, ok := fs.(WalkFS); ok {
-		t.Run("WalkFS", func(t *testing.T) {
-			testWalkFS(t, wfs)
-		})
-	}
-
 	if seafs, ok := fs.(SetExtendedAttrsFS); ok {
 		t.Run("SetExtendedAttrsFS", func(t *testing.T) {
 			testSetExtendedAttrsFS(t, seafs)
 		})
 	}
 
-	if rfs, ok := fs.(RootFS); ok {
-		t.Run("Open", func(t *testing.T) {
-			testRootFSOpen(t, rfs)
-		})
-	}
+	RunTestSuiteRO(t, fs)
 }
 
 // Individual test functions
@@ -176,21 +171,19 @@ func testList(t *testing.T, fs FS) {
 
 	defer lister.Close()
 
-	buf := make([]FileInfo, 10)
-
-	n, err := lister.ListAt(buf, 0)
-	if err != nil && !errors.Is(err, io.EOF) {
+	entries, err := ListAll(lister)
+	if err != nil {
 		t.Fatal(err)
 	}
 
-	t.Logf("Found %d entries in root directory", n)
+	t.Logf("Found %d entries in root directory", len(entries))
 
-	for i, finfo := range buf[:n] {
+	for i, finfo := range entries {
 		t.Logf("  [%d] %s (dir: %v, size: %d)", i, finfo.Name(), finfo.IsDir(), finfo.Size())
 	}
 
 	// Test listing with different buffer sizes
-	if n == 0 {
+	if len(entries) == 0 {
 		return
 	}
 
@@ -216,8 +209,8 @@ func testList(t *testing.T, fs FS) {
 		}
 	}
 
-	if count != n {
-		t.Errorf("Expected %d entries with small buffer, got %d", n, count)
+	if count != len(entries) {
+		t.Errorf("Expected %d entries with small buffer, got %d", len(entries), count)
 	}
 }
 

@@ -42,5 +42,5 @@ func TestSFTP(t *testing.T) {
 
 	sub := wrapfs.Sub(fs, t.TempDir())
 
-	vfs.RunTestSuiteAdvanced(t, sub)
+	vfs.RunTestSuiteRW(t, sub)
 }

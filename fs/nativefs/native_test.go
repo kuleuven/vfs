@@ -9,7 +9,7 @@ import (
 )
 
 func TestNativeFS(t *testing.T) {
-	vfs.RunTestSuiteAdvanced(t, New(t.Context(), t.TempDir()))
+	vfs.RunTestSuiteRW(t, New(t.Context(), t.TempDir()))
 
 	if os.Getuid() == 0 {
 		dir := t.TempDir()
@@ -23,6 +23,6 @@ func TestNativeFS(t *testing.T) {
 			return
 		}
 
-		vfs.RunTestSuiteAdvanced(t, NewAsUser(t.Context(), dir, &runas.User{UID: 1000, GID: 1000}))
+		vfs.RunTestSuiteRW(t, NewAsUser(t.Context(), dir, &runas.User{UID: 1000, GID: 1000}))
 	}
 }

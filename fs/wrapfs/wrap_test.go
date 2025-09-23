@@ -10,5 +10,5 @@ import (
 func TestWrap(t *testing.T) {
 	top := nativefs.New(t.Context(), t.TempDir())
 
-	vfs.RunTestSuiteAdvanced(t, Sub(Wrap(top, "/a", "/b", "/c"), "/a"))
+	vfs.RunTestSuiteRW(t, Sub(Wrap(top, "/a", "/b", "/c"), "/a"))
 }
