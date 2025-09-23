@@ -8,6 +8,8 @@ import (
 	"sync"
 
 	"github.com/kuleuven/vfs/bytetree"
+
+	_ "crypto/md5"
 )
 
 type DB struct {
