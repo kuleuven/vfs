@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
+	"github.com/kuleuven/vfs"
 	"github.com/kuleuven/vfs/fs/nativefs"
-	"github.com/kuleuven/vfs/testsuite"
 )
 
 func TestSubdir(t *testing.T) {
@@ -17,5 +17,5 @@ func TestSubdir(t *testing.T) {
 
 	top := nativefs.New(t.Context(), dir)
 
-	testsuite.RunTestSuiteAdvanced(t, Sub(top, "/subdir"))
+	vfs.RunTestSuiteAdvanced(t, Sub(top, "/subdir"))
 }

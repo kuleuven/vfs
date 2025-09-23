@@ -3,9 +3,9 @@ package emptyfs
 import (
 	"testing"
 
-	"github.com/kuleuven/vfs/testsuite"
+	"github.com/kuleuven/vfs"
 )
 
 func TestEmptyFS(t *testing.T) {
-	testsuite.RunTestSuiteRO(t, New())
+	vfs.RunTestSuiteRO(t, New())
 }

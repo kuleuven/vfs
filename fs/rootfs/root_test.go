@@ -7,7 +7,6 @@ import (
 	"github.com/kuleuven/vfs"
 	"github.com/kuleuven/vfs/fs/emptyfs"
 	"github.com/kuleuven/vfs/fs/nativefs"
-	"github.com/kuleuven/vfs/testsuite"
 )
 
 func TestNativeFS(t *testing.T) {
@@ -27,7 +26,7 @@ func TestNativeFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testsuite.RunTestSuiteAdvanced(t, root)
+	vfs.RunTestSuiteAdvanced(t, root)
 }
 
 func TestNativeFSServerInodes(t *testing.T) {
@@ -47,5 +46,5 @@ func TestNativeFSServerInodes(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testsuite.RunTestSuiteAdvanced(t, root)
+	vfs.RunTestSuiteAdvanced(t, root)
 }
