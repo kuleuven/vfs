@@ -198,13 +198,13 @@ func TestReaderSeek(t *testing.T) { //nolint:funlen,gocognit
 		reader.Read(buf)
 
 		// Seek relative to current position
-		offset, err := reader.Seek(2, io.SeekCurrent)
+		offset, err := reader.Seek(1, io.SeekCurrent)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
 
-		if offset != 9 {
-			t.Fatalf("expected offset 9, got %d", offset)
+		if offset != 8 {
+			t.Fatalf("expected offset 8, got %d", offset)
 		}
 
 		buf = make([]byte, 5)
