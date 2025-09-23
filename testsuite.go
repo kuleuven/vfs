@@ -126,7 +126,7 @@ func RunTestSuiteAdvanced(t *testing.T, fs FS) {
 
 	if rfs, ok := fs.(RootFS); ok {
 		t.Run("Open", func(t *testing.T) {
-			testRootFS(t, rfs)
+			testRootFSOpen(t, rfs)
 		})
 	}
 }
@@ -731,7 +731,7 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 	}
 }
 
-func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
+func testSymlinkFS(t *testing.T, sfs SymlinkFS) { //nolint:funlen
 	target := "/test_symlink_target.txt"
 	link := "/test_symlink.txt"
 
@@ -754,6 +754,26 @@ func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
 
 	if linkTarget != target {
 		t.Errorf("Expected symlink target '%s', got '%s'", target, linkTarget)
+	}
+
+	if alfs, ok := sfs.(AdvancedLinkFS); ok {
+		rtarget, err := alfs.RealPath(target)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if rtarget != target {
+			t.Errorf("Expected symlink target '%s', got '%s'", target, rtarget)
+		}
+
+		rlink, err := alfs.RealPath(link)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if rlink != target {
+			t.Errorf("Expected symlink target '%s', got '%s'", target, rlink)
+		}
 	}
 
 	// Test lstat vs stat
@@ -923,15 +943,13 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 	}
 }
 
-func testRootFS(t *testing.T, rfs RootFS) {
+func testRootFSOpen(t *testing.T, rfs RootFS) {
 	f, err := rfs.Open("/")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	defer f.Close()
-
-	var paths []string
 
 	for {
 		finfo, err := f.Readdir(1)
@@ -947,6 +965,6 @@ func testRootFS(t *testing.T, rfs RootFS) {
 			continue
 		}
 
-		paths = append(paths, finfo[0].Name())
+		t.Logf("RootFS: %s (dir: %v)", finfo[0].Name(), finfo[0].IsDir())
 	}
 }

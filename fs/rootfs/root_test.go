@@ -12,6 +12,8 @@ import (
 func TestNativeFS(t *testing.T) {
 	root := New(t.Context())
 
+	defer root.Close()
+
 	dir := t.TempDir()
 
 	if err := root.Mount("/", nativefs.New(t.Context(), dir), 0); err != nil {
@@ -31,6 +33,8 @@ func TestNativeFS(t *testing.T) {
 
 func TestNativeFSServerInodes(t *testing.T) {
 	root := New(context.WithValue(t.Context(), vfs.UseServerInodes, true))
+
+	defer root.Close()
 
 	dir := t.TempDir()
 
