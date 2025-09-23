@@ -15,5 +15,7 @@ require (
 require (
 	github.com/joshlf/testutil v0.0.0-20170608050642-b5d8aa79d93d // indirect
 	github.com/kr/fs v0.1.0 // indirect
+	github.com/spf13/afero v1.15.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect
+	golang.org/x/text v0.28.0 // indirect
 )
