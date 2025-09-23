@@ -838,15 +838,7 @@ func (r *Root) Path(handle []byte) (string, error) {
 			path, err = mp.HandleDB.Get(handle[1:])
 		}
 
-		if err != nil {
-			return "", err
-		}
-
-		if path == "/" {
-			return mp.Mountpoint, nil
-		}
-
-		return vfs.Join(mp.Mountpoint, path[1:]), nil
+		return vfs.Join(mp.Mountpoint, path[1:]), err
 	}
 
 	return "", os.ErrNotExist

@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -22,6 +23,12 @@ func Join(paths ...string) string {
 	for i := 1; i < len(paths); i++ {
 		if IsAbs(paths[i]) {
 			logrus.Errorf("Join(%q) called with invalid input", paths)
+		}
+
+		// Strip empty elements
+		if paths[i] == "" {
+			paths = append(paths[:i], paths[i+1:]...)
+			i--
 		}
 	}
 
@@ -56,31 +63,30 @@ func Clean(path string) string {
 			continue
 		}
 
-		if element == ".." {
-			// Remove the last element
-			if len(elements) == 0 {
-				neg++
-			} else {
-				elements = elements[:len(elements)-1]
-			}
+		if element != ".." {
+			elements = append(elements, element)
 
 			continue
 		}
 
-		elements = append(elements, element)
+		// Remove the last element
+		if len(elements) == 0 {
+			neg++
+		} else {
+			elements = elements[:len(elements)-1]
+		}
 	}
 
-	prefix := strings.Repeat(".."+string(Separator), neg)
+	elements = append(slices.Repeat([]string{".."}, neg), elements...)
 
-	if prefix == "" && IsPathSeparator(path[0]) {
-		prefix = string(Separator)
-	}
-
-	if prefix == "" && len(elements) == 0 {
+	switch {
+	case neg == 0 && IsPathSeparator(path[0]):
+		return string(Separator) + strings.Join(elements, string(Separator))
+	case len(elements) == 0:
 		return "."
+	default:
+		return strings.Join(elements, string(Separator))
 	}
-
-	return prefix + strings.Join(elements, string(Separator))
 }
 
 // Dir returns all but the last element of path, typically the path's directory.

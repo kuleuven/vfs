@@ -186,32 +186,34 @@ func testList(t *testing.T, fs vfs.FS) {
 	}
 
 	// Test listing with different buffer sizes
-	if n > 0 {
-		smallBuf := make([]vfs.FileInfo, 1)
-		count := 0
-		offset := int64(0)
+	if n == 0 {
+		return
+	}
 
-		for {
-			m, err := lister.ListAt(smallBuf, offset)
-			if m == 0 {
-				break
-			}
+	smallBuf := make([]vfs.FileInfo, 1)
+	count := 0
+	offset := int64(0)
 
-			count += m
-			offset += int64(m)
-
-			if errors.Is(err, io.EOF) {
-				break
-			}
-
-			if err != nil {
-				t.Fatal(err)
-			}
+	for {
+		m, err := lister.ListAt(smallBuf, offset)
+		if m == 0 {
+			break
 		}
 
-		if count != n {
-			t.Errorf("Expected %d entries with small buffer, got %d", n, count)
+		count += m
+		offset += int64(m)
+
+		if errors.Is(err, io.EOF) {
+			break
 		}
+
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if count != n {
+		t.Errorf("Expected %d entries with small buffer, got %d", n, count)
 	}
 }
 
@@ -368,12 +370,6 @@ func testFileOperations(t *testing.T, fs vfs.FS) { //nolint:funlen
 	}
 
 	err = fw2.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Clean up
-	err = fs.Remove(testPath)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"syscall"
 
 	"github.com/joshlf/go-acl"
@@ -146,35 +147,39 @@ func checkPermission(fi os.FileInfo, a acl.ACL, perm Permission) error {
 	case find(a, acl.TagUser, syscall.Getuid(), &aclmode):
 		return perm.Check(aclmode & aclmask(a))
 	default:
-		foundGroup := false
-		mask := aclmask(a)
-
-		for _, g := range groups {
-			if stat.Gid == uint32(g) {
-				if perm.Check(fi.Mode()>>3&mask) == nil {
-					return nil
-				}
-
-				foundGroup = true
-			}
-
-			if !find(a, acl.TagGroup, g, &aclmode) {
-				continue
-			}
-
-			if perm.Check(aclmode&mask) == nil {
-				return nil
-			}
-
-			foundGroup = true
-		}
-
-		if foundGroup {
-			return os.ErrPermission
-		}
-
-		return perm.Check(fi.Mode())
+		// See below
 	}
+
+	foundGroup := false
+	mask := aclmask(a)
+
+	// Check group permission
+	if slices.Contains(groups, int(stat.Gid)) {
+		if perm.Check(fi.Mode()>>3&mask) == nil {
+			return nil
+		}
+
+		foundGroup = true
+	}
+
+	// Check acl group permissions
+	for _, g := range groups {
+		if !find(a, acl.TagGroup, g, &aclmode) {
+			continue
+		}
+
+		if perm.Check(aclmode&mask) == nil {
+			return nil
+		}
+
+		foundGroup = true
+	}
+
+	if foundGroup {
+		return os.ErrPermission
+	}
+
+	return perm.Check(fi.Mode())
 }
 
 func aclmask(a acl.ACL) os.FileMode {

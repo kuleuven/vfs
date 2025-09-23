@@ -68,58 +68,25 @@ func (db *ByteTree) Put(value Value) error { //nolint:funlen,gocognit
 			continue
 		}
 
-		if ptr == 0 {
-			ptr, err = db.values.Add(value)
-			if err != nil {
-				return err
-			}
-
-			return db.write(offset+int64(value.Handle[i])*8, 0, -ptr-1)
-		}
-
-		stored, err := db.values.Get(-ptr - 1)
-		if err != nil {
+		// Try to save the value
+		storedHandle, err := db.replaceValue(offset+int64(value.Handle[i])*8, ptr, value)
+		if err != ErrDifferentHandle {
 			return err
-		}
-
-		if bytes.Equal(stored.Handle, value.Handle) {
-			if stored.Path == value.Path {
-				return nil
-			}
-
-			newptr, err := db.values.Add(value)
-			if err != nil {
-				return err
-			}
-
-			return db.write(offset+int64(value.Handle[i])*8, ptr, -newptr-1)
 		}
 
 		// Need to expand the tree
-		newOffset, err := db.newOffset()
-		if err != nil {
-			return err
-		}
-
 		var next int64
 
-		if len(stored.Handle) == i+1 {
+		if len(storedHandle) == i+1 {
 			next = 256 * 8
 		} else {
-			next = int64(stored.Handle[i+1]) * 8
+			next = int64(storedHandle[i+1]) * 8
 		}
 
-		err = db.write(newOffset+next, 0, ptr)
+		offset, err = db.expandTree(offset+int64(value.Handle[i])*8, next, ptr)
 		if err != nil {
 			return err
 		}
-
-		err = db.write(offset+int64(value.Handle[i])*8, ptr, newOffset)
-		if err != nil {
-			return err
-		}
-
-		offset = newOffset
 	}
 
 	ptr, err := db.read(offset + 256*8)
@@ -127,23 +94,65 @@ func (db *ByteTree) Put(value Value) error { //nolint:funlen,gocognit
 		return err
 	}
 
-	if ptr < 0 {
-		val, err := db.values.Get(-ptr - 1)
-		if err != nil {
-			return err
-		}
+	_, err = db.replaceValue(offset+256*8, ptr, value)
 
-		if val.Path == value.Path {
-			return nil
-		}
-	}
+	return err
+}
 
-	newptr, err := db.values.Add(value)
+func (db *ByteTree) newValue(offset int64, value Value) error {
+	ptr, err := db.values.Add(value)
 	if err != nil {
 		return err
 	}
 
-	return db.write(offset+256*8, ptr, -newptr-1)
+	return db.write(offset, 0, -ptr-1)
+}
+
+var ErrDifferentHandle = errors.New("different handle")
+
+func (db *ByteTree) replaceValue(offset int64, ptr int64, value Value) ([]byte, error) {
+	if ptr == 0 {
+		return nil, db.newValue(offset, value)
+	}
+
+	stored, err := db.values.Get(-ptr - 1)
+	if err != nil {
+		return nil, err
+	}
+
+	if !bytes.Equal(stored.Handle, value.Handle) {
+		return stored.Handle, ErrDifferentHandle
+	}
+
+	if stored.Path == value.Path {
+		return stored.Handle, nil
+	}
+
+	newPtr, err := db.values.Add(value)
+	if err != nil {
+		return stored.Handle, err
+	}
+
+	return stored.Handle, db.write(offset, ptr, -newPtr-1)
+}
+
+func (db *ByteTree) expandTree(offset, next, ptr int64) (int64, error) {
+	newOffset, err := db.newOffset()
+	if err != nil {
+		return 0, err
+	}
+
+	err = db.write(newOffset+next, 0, ptr)
+	if err != nil {
+		return 0, err
+	}
+
+	err = db.write(offset, ptr, newOffset)
+	if err != nil {
+		return 0, err
+	}
+
+	return newOffset, nil
 }
 
 func (db *ByteTree) Get(handle []byte) (string, error) {
@@ -155,24 +164,26 @@ func (db *ByteTree) Get(handle []byte) (string, error) {
 			return "", err
 		}
 
-		if ptr < 0 {
-			val, err := db.values.Get(-ptr - 1)
-			if err != nil {
-				return "", err
-			}
-
-			if !bytes.Equal(val.Handle, handle) {
-				return "", os.ErrNotExist
-			}
-
-			return val.Path, nil
-		}
-
 		if ptr == 0 {
 			return "", os.ErrNotExist
 		}
 
-		offset = ptr
+		if ptr > 0 {
+			offset = ptr
+
+			continue
+		}
+
+		val, err := db.values.Get(-ptr - 1)
+		if err != nil {
+			return "", err
+		}
+
+		if !bytes.Equal(val.Handle, handle) {
+			return "", os.ErrNotExist
+		}
+
+		return val.Path, nil
 	}
 
 	ptr, err := db.read(offset + 256*8)
@@ -279,12 +290,7 @@ func (db *ByteTree) print(offset int64, prefix []byte) {
 		newPrefix = append(newPrefix, byte(i))
 
 		if ptr < 0 {
-			val, err := db.values.Get(-ptr - 1)
-			if err != nil {
-				return
-			}
-
-			fmt.Printf("%x\t%x\t%s\n", newPrefix, val.Handle, val.Path)
+			printValue(db.values, newPrefix, ptr)
 
 			continue
 		}
@@ -299,18 +305,20 @@ func (db *ByteTree) print(offset int64, prefix []byte) {
 	}
 
 	ptr, err := db.read(offset + 256*8)
+	if err != nil || ptr >= 0 {
+		return
+	}
+
+	printValue(db.values, prefix, ptr)
+}
+
+func printValue(values *values, prefix []byte, ptr int64) {
+	val, err := values.Get(-ptr - 1)
 	if err != nil {
 		return
 	}
 
-	if ptr < 0 {
-		val, err := db.values.Get(-ptr - 1)
-		if err != nil {
-			return
-		}
-
-		fmt.Printf("%x\t%x\t%s\n", prefix, val.Handle, val.Path)
-	}
+	fmt.Printf("%x\t%x\t%s\n", prefix, val.Handle, val.Path)
 }
 
 func (db *ByteTree) Close() error {

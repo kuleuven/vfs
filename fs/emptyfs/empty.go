@@ -36,7 +36,7 @@ func (Empty) List(path string) (vfs.ListerAt, error) {
 		return nil, os.ErrNotExist
 	}
 
-	return EmptyDirFile{}, nil
+	return EmptyDirList{}, nil
 }
 
 func (Empty) Walk(path string, walkFn vfs.WalkFunc) error {
@@ -125,11 +125,17 @@ func (fi EmptyDirStat) Gid() uint32 {
 	return 0
 }
 
-type EmptyDirFile struct{}
+type EmptyDirList struct{}
 
-func (EmptyDirFile) ListAt(buf []vfs.FileInfo, offset int64) (int, error) {
+func (EmptyDirList) Close() error {
+	return nil
+}
+
+func (EmptyDirList) ListAt(buf []vfs.FileInfo, offset int64) (int, error) {
 	return 0, io.EOF
 }
+
+type EmptyDirFile struct{}
 
 func (EmptyDirFile) Close() error {
 	return nil

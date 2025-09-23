@@ -141,10 +141,10 @@ func Walk(fs WalkableFS, root string, fn WalkFunc) error {
 	if err != nil {
 		err = fn(root, nil, err)
 	} else {
-		err = walk(fs, root, info, fn)
+		err = walk(fs, root, info, fn, false)
 	}
 
-	if err == SkipDir || err == SkipAll {
+	if err == SkipAll || err == SkipDir || err == SkipSubDirs {
 		return nil
 	}
 
@@ -153,8 +153,8 @@ func Walk(fs WalkableFS, root string, fn WalkFunc) error {
 
 type WalkRelFunc func(path, rel string, info FileInfo, err error) error
 
-func walk(fs WalkableFS, path string, info FileInfo, walkFn WalkFunc) error {
-	if !info.IsDir() {
+func walk(fs WalkableFS, path string, info FileInfo, walkFn WalkFunc, mustSkipDirs bool) error {
+	if !info.IsDir() || mustSkipDirs {
 		return walkFn(path, info, nil)
 	}
 
@@ -174,20 +174,9 @@ func walk(fs WalkableFS, path string, info FileInfo, walkFn WalkFunc) error {
 	for _, entry := range entries {
 		filename := Join(path, entry.Name())
 
-		if err1 == SkipSubDirs && entry.IsDir() {
-			err = walkFn(filename, info, nil)
-			if err != nil && err != SkipDir && err != SkipSubDirs {
-				return err
-			}
-
-			continue
-		}
-
-		err = walk(fs, filename, entry, walkFn)
-		if err != nil {
-			if !entry.IsDir() || err != SkipDir {
-				return err
-			}
+		err = walk(fs, filename, entry, walkFn, err1 == SkipSubDirs)
+		if err != nil && err != SkipDir && err != SkipSubDirs {
+			return err
 		}
 	}
 
