@@ -123,6 +123,12 @@ func RunTestSuiteAdvanced(t *testing.T, fs FS) {
 			testSetExtendedAttrsFS(t, seafs)
 		})
 	}
+
+	if rfs, ok := fs.(RootFS); ok {
+		t.Run("Open", func(t *testing.T) {
+			testRootFS(t, rfs)
+		})
+	}
 }
 
 // Individual test functions
@@ -914,5 +920,33 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 		} else {
 			t.Errorf("Attribute %s not found after batch set", name)
 		}
+	}
+}
+
+func testRootFS(t *testing.T, rfs RootFS) {
+	f, err := rfs.Open("/")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	defer f.Close()
+
+	var paths []string
+
+	for {
+		finfo, err := f.Readdir(1)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+
+			t.Fatal(err)
+		}
+
+		if len(finfo) == 0 {
+			continue
+		}
+
+		paths = append(paths, finfo[0].Name())
 	}
 }

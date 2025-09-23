@@ -7,7 +7,7 @@ import (
 
 func TestRunAs(t *testing.T) {
 	t.Run("RunAsCurrentUser", func(t *testing.T) {
-		testRunAs(t, RunAsCurrentUser())
+		testRunAs(RunAsCurrentUser())
 	})
 
 	if os.Getuid() == 0 {
@@ -17,12 +17,12 @@ func TestRunAs(t *testing.T) {
 				t.Fatal(err)
 			}
 
-			testRunAs(t, ctx)
+			testRunAs(ctx)
 		})
 	}
 }
 
-func testRunAs(t *testing.T, ctx Context) {
+func testRunAs(ctx Context) {
 	defer ctx.Close()
 
 	ctx.Run(func() error {
