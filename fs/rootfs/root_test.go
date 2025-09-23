@@ -9,8 +9,10 @@ import (
 	"github.com/kuleuven/vfs/fs/nativefs"
 )
 
-func TestNativeFS(t *testing.T) {
-	root := New(t.Context())
+func TestRootNativeFS(t *testing.T) {
+	ctx := context.WithValue(t.Context(), vfs.PersistentStorage, t.TempDir())
+
+	root := New(ctx)
 
 	defer root.Close()
 
@@ -31,18 +33,20 @@ func TestNativeFS(t *testing.T) {
 	vfs.RunTestSuiteAdvanced(t, root)
 }
 
-func TestNativeFSServerInodes(t *testing.T) {
-	root := New(context.WithValue(t.Context(), vfs.UseServerInodes, true))
+func TestRootNativeFSServerInodes(t *testing.T) {
+	ctx := context.WithValue(t.Context(), vfs.UseServerInodes, true)
+
+	root := New(ctx)
 
 	defer root.Close()
 
 	dir := t.TempDir()
 
-	if err := root.Mount("/", nativefs.New(t.Context(), dir), 0); err != nil {
+	if err := root.Mount("/", nativefs.New(ctx, dir), 0); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := root.Mount("/submount", nativefs.New(t.Context(), dir), 1); err != nil {
+	if err := root.Mount("/submount", nativefs.New(ctx, dir), 1); err != nil {
 		t.Fatal(err)
 	}
 

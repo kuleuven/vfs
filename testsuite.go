@@ -655,32 +655,48 @@ func testExtendedAttributes(t *testing.T, fs FS) {
 // Tests for advanced interfaces
 
 func testHandleFS(t *testing.T, hfs HandleFS) {
-	handle, err := hfs.Handle("/")
-	if err != nil {
-		t.Fatal(err)
-	}
+	Walk(hfs, "/", func(path string, info FileInfo, err error) error { //nolint:errcheck
+		if err != nil {
+			return err
+		}
 
-	if len(handle) == 0 {
-		t.Error("Handle should not be empty")
-	}
+		handle, err := hfs.Handle(path)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	t.Logf("Root handle: %x", handle)
+		if len(handle) == 0 {
+			t.Error("Handle should not be empty")
+		}
+
+		t.Logf("handle of %s: %x", path, handle)
+
+		return nil
+	})
 }
 
 func testHandleResolveFS(t *testing.T, hrfs HandleResolveFS) {
-	handle, err := hrfs.Handle("/")
-	if err != nil {
-		t.Fatal(err)
-	}
+	Walk(hrfs, "/", func(path string, info FileInfo, err error) error { //nolint:errcheck
+		if err != nil {
+			return err
+		}
 
-	path, err := hrfs.Path(handle)
-	if err != nil {
-		t.Fatal(err)
-	}
+		handle, err := hrfs.Handle(path)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if path != "/" {
-		t.Errorf("Expected path '/', got '%s'", path)
-	}
+		resolved, err := hrfs.Path(handle)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if resolved != path {
+			t.Errorf("Expected path '%s', got '%s'", path, resolved)
+		}
+
+		return nil
+	})
 }
 
 func testOpenFileFS(t *testing.T, offs OpenFileFS) {

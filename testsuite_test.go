@@ -1,6 +1,7 @@
 package vfs_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/kuleuven/vfs"
@@ -13,9 +14,10 @@ func TestNativeFS(t *testing.T) {
 }
 
 func TestRootFS(t *testing.T) {
-	root := rootfs.New(t.Context())
+	ctx := context.WithValue(t.Context(), vfs.PersistentStorage, t.TempDir())
+	root := rootfs.New(ctx)
 
-	root.MustMount("/", nativefs.New(t.Context(), t.TempDir()), 0)
+	root.MustMount("/", nativefs.New(ctx, t.TempDir()), 0)
 
 	vfs.RunTestSuiteAdvanced(t, root)
 }

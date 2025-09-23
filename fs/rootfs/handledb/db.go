@@ -9,7 +9,7 @@ import (
 
 	"github.com/kuleuven/vfs/bytetree"
 
-	_ "crypto/md5"
+	_ "crypto/md5" //nolint:gosec
 )
 
 type DB struct {
