@@ -740,7 +740,7 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 	}
 }
 
-func testSymlinkFS(t *testing.T, sfs SymlinkFS) { //nolint:funlen
+func testSymlinkFS(t *testing.T, sfs SymlinkFS) {
 	target := "/test_symlink_target.txt"
 	link := "/test_symlink.txt"
 
@@ -762,27 +762,12 @@ func testSymlinkFS(t *testing.T, sfs SymlinkFS) { //nolint:funlen
 	}
 
 	if linkTarget != target {
-		t.Errorf("Expected symlink target '%s', got '%s'", target, linkTarget)
+		t.Errorf("Expected symlink target '%s' for Readlink, got '%s'", target, linkTarget)
 	}
 
 	if alfs, ok := sfs.(AdvancedLinkFS); ok {
-		rtarget, err := alfs.RealPath(target)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if rtarget != target {
-			t.Errorf("Expected symlink target '%s', got '%s'", target, rtarget)
-		}
-
-		rlink, err := alfs.RealPath(link)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		if rlink != target {
-			t.Errorf("Expected symlink target '%s', got '%s'", target, rlink)
-		}
+		testRealPath(t, alfs, link, target)
+		testRealPath(t, alfs, target, target)
 	}
 
 	// Test lstat vs stat
@@ -812,6 +797,17 @@ func testSymlinkFS(t *testing.T, sfs SymlinkFS) { //nolint:funlen
 
 	if err := sfs.Remove(target); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func testRealPath(t *testing.T, alfs AdvancedLinkFS, path, expected string) {
+	target, err := alfs.RealPath(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if target != expected {
+		t.Errorf("Expected symlink target '%s' for RealPath, got '%s'", expected, target)
 	}
 }
 

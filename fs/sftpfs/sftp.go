@@ -420,7 +420,6 @@ func (s *SFTPFileInfo) Gid() uint32 {
 
 func (s *SFTPFileInfo) Permissions() (*vfs.Permissions, error) {
 	// Return bogus values, we cannot determine them
-	// TODO: add way to resolve them similar to Handle/Path functions
 	return &vfs.Permissions{
 		Read:             true,
 		Write:            true,
