@@ -53,7 +53,7 @@ type ByteTree struct {
 
 var ErrHasValue = errors.New("has value")
 
-func (db *ByteTree) Put(value Value) error { //nolint:funlen,gocognit
+func (db *ByteTree) Put(value Value) error {
 	var offset int64
 
 	for i := range len(value.Handle) {
@@ -110,7 +110,7 @@ func (db *ByteTree) newValue(offset int64, value Value) error {
 
 var ErrDifferentHandle = errors.New("different handle")
 
-func (db *ByteTree) replaceValue(offset int64, ptr int64, value Value) ([]byte, error) {
+func (db *ByteTree) replaceValue(offset, ptr int64, value Value) ([]byte, error) {
 	if ptr == 0 {
 		return nil, db.newValue(offset, value)
 	}
