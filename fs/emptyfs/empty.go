@@ -117,11 +117,11 @@ func (fi EmptyDirStat) Permissions() (*vfs.Permissions, error) {
 	}, nil
 }
 
-func (fi EmptyDirStat) Uid() uint32 {
+func (fi EmptyDirStat) Uid() uint32 { //nolint:staticcheck
 	return 0
 }
 
-func (fi EmptyDirStat) Gid() uint32 {
+func (fi EmptyDirStat) Gid() uint32 { //nolint:staticcheck
 	return 0
 }
 

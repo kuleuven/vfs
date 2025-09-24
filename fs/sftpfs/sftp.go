@@ -410,11 +410,11 @@ func (s *SFTPFileInfo) Sys() interface{} {
 	return s.sys
 }
 
-func (s *SFTPFileInfo) Uid() uint32 {
+func (s *SFTPFileInfo) Uid() uint32 { //nolint:staticcheck
 	return s.sys.UID
 }
 
-func (s *SFTPFileInfo) Gid() uint32 {
+func (s *SFTPFileInfo) Gid() uint32 { //nolint:staticcheck
 	return s.sys.GID
 }
 

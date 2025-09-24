@@ -45,6 +45,7 @@ func (m *mockWriterAt) WriteAt(p []byte, off int64) (int, error) {
 func (m *mockWriterAt) getData() []byte {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	result := make([]byte, len(m.data))
 	copy(result, m.data)
 
@@ -111,6 +112,7 @@ func (m *mockWriteSeeker) Seek(offset int64, whence int) (int64, error) {
 func (m *mockWriteSeeker) getData() []byte {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+
 	result := make([]byte, len(m.data))
 	copy(result, m.data)
 
@@ -451,7 +453,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 		var wg sync.WaitGroup
 
-		errors := make(chan error, numGoroutines)
+		errorch := make(chan error, numGoroutines)
 
 		for range numGoroutines {
 			wg.Add(1)
@@ -464,7 +466,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 					_, err := writer.Write(data)
 					if err != nil {
-						errors <- err
+						errorch <- err
 						return
 					}
 				}
@@ -472,10 +474,10 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 		}
 
 		wg.Wait()
-		close(errors)
+		close(errorch)
 
 		// Check for any errors
-		for err := range errors {
+		for err := range errorch {
 			t.Fatalf("concurrent write error: %v", err)
 		}
 
@@ -504,7 +506,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 		var wg sync.WaitGroup
 
-		errors := make(chan error, numGoroutines)
+		errorch := make(chan error, numGoroutines)
 
 		for i := range numGoroutines {
 			wg.Add(1)
@@ -517,7 +519,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 				_, err := writer.Seek(offset, io.SeekStart)
 				if err != nil {
-					errors <- err
+					errorch <- err
 					return
 				}
 
@@ -526,17 +528,17 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 				_, err = writer.Write(data)
 				if err != nil {
-					errors <- err
+					errorch <- err
 					return
 				}
 			}(i)
 		}
 
 		wg.Wait()
-		close(errors)
+		close(errorch)
 
 		// Check for any errors
-		for err := range errors {
+		for err := range errorch {
 			t.Fatalf("concurrent seek/write error: %v", err)
 		}
 
@@ -569,7 +571,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 		var wg sync.WaitGroup
 
-		errors := make(chan error, numGoroutines)
+		errorch := make(chan error, numGoroutines)
 
 		for i := range numGoroutines {
 			wg.Add(1)
@@ -583,7 +585,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 
 					_, err := writerAt.WriteAt(data, offset)
 					if err != nil {
-						errors <- err
+						errorch <- err
 						return
 					}
 				}
@@ -591,10 +593,10 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 		}
 
 		wg.Wait()
-		close(errors)
+		close(errorch)
 
 		// Check for any errors
-		for err := range errors {
+		for err := range errorch {
 			t.Fatalf("concurrent WriteAt error: %v", err)
 		}
 

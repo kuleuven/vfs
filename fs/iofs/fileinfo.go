@@ -10,11 +10,11 @@ type FileInfo struct {
 	fs.FileInfo
 }
 
-func (f *FileInfo) Uid() uint32 {
+func (f *FileInfo) Uid() uint32 { //nolint:staticcheck
 	return 0
 }
 
-func (f *FileInfo) Gid() uint32 {
+func (f *FileInfo) Gid() uint32 { //nolint:staticcheck
 	return 0
 }
 

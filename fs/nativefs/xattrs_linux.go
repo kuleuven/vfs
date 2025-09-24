@@ -154,7 +154,7 @@ func LPackExtendedAttrs(fi os.FileInfo, path string) *ExtendedFileInfo {
 	}
 }
 
-func (fi *ExtendedFileInfo) Uid() uint32 {
+func (fi *ExtendedFileInfo) Uid() uint32 { //nolint:staticcheck
 	stat, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
 		return 0
@@ -163,7 +163,7 @@ func (fi *ExtendedFileInfo) Uid() uint32 {
 	return stat.Uid
 }
 
-func (fi *ExtendedFileInfo) Gid() uint32 {
+func (fi *ExtendedFileInfo) Gid() uint32 { //nolint:staticcheck
 	stat, ok := fi.Sys().(*syscall.Stat_t)
 	if !ok {
 		return 0
