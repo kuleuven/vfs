@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"syscall"
@@ -251,17 +252,30 @@ type WalkRemoveFS interface {
 }
 
 func RemoveAll(fs WalkRemoveFS, path string) error {
-	return Walk(fs, path, func(path string, info FileInfo, err error) error {
-		if info.IsDir() && info.Mode()&os.ModeSymlink == 0 {
-			if err := RemoveAll(fs, path); err != nil {
-				return err
-			}
+	dirs := []string{}
 
-			return filepath.SkipDir
+	err := Walk(fs, path, func(path string, info FileInfo, err error) error {
+		if info.IsDir() && info.Mode()&os.ModeSymlink == 0 {
+			dirs = append(dirs, path)
+
+			return nil
 		}
 
 		return fs.Remove(path)
 	})
+	if err != nil {
+		return err
+	}
+
+	slices.Reverse(dirs)
+
+	for _, dir := range dirs {
+		if err := fs.Remove(dir); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type OpenableFS interface {
