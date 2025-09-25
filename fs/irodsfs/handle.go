@@ -120,6 +120,7 @@ func (handle *IRODSFileHandle) Stat() (vfs.FileInfo, error) {
 		group:         handle.fs.ResolveUID(handle.dataobject.Replicas[0].Owner),
 		extendedAttrs: attrs,
 		permissionSet: permissionSet(handle.fs.getPermission(access, handle.fs.Username(), true)),
+		sys:           handle.dataobject,
 	}, nil
 }
 

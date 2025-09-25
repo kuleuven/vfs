@@ -16,50 +16,32 @@ import (
 
 func (fs *IRODS) stat(path string) (vfs.FileInfo, error) {
 	// Is the path a collection?
-	collection, err := fs.Client.GetCollection(fs.Context, path)
-	if errors.Is(err, api.ErrNoRowFound) {
-		collection = nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	if collection != nil && collection.ID > 0 {
-		access, err := fs.Client.ListAccess(fs.Context, path, api.CollectionType)
-		if err != nil {
-			return nil, err
-		}
-
-		metadata, err := fs.Client.ListMetadata(fs.Context, path, api.CollectionType)
-		if err != nil {
-			return nil, err
-		}
-
-		return fs.makeCollectionFileInfo(collection, access, metadata), err
-	}
-
-	// Is the path a data object?
-	dataobject, err := fs.Client.GetDataObject(fs.Context, path)
+	record, err := fs.Client.GetRecord(fs.Context, path, api.FetchAccess, api.FetchMetadata)
 	if errors.Is(err, api.ErrNoRowFound) {
 		return nil, syscall.ENOENT
 	} else if err != nil {
 		return nil, err
 	}
 
-	if dataobject == nil || dataobject.ID <= 0 {
-		return nil, syscall.ENOENT
+	return fs.makeFileInfo(record)
+}
+
+func (fs *IRODS) makeFileInfo(record api.Record) (vfs.FileInfo, error) {
+	if record.IsDir() {
+		collection, ok := record.Sys().(*api.Collection)
+		if !ok {
+			return nil, msg.ErrTypeAssertion
+		}
+
+		return fs.makeCollectionFileInfo(collection, record.Access(), record.Metadata()), nil
 	}
 
-	access, err := fs.Client.ListAccess(fs.Context, path, api.DataObjectType)
-	if err != nil {
-		return nil, err
+	object, ok := record.Sys().(*api.DataObject)
+	if !ok {
+		return nil, msg.ErrTypeAssertion
 	}
 
-	metadata, err := fs.Client.ListMetadata(fs.Context, path, api.DataObjectType)
-	if err != nil {
-		return nil, err
-	}
-
-	return fs.makeDataObjectFileInfo(dataobject, access, metadata), err
+	return fs.makeDataObjectFileInfo(object, record.Access(), record.Metadata()), nil
 }
 
 func (fs *IRODS) makeCollectionFileInfo(collection *api.Collection, access []api.Access, metadata []api.Metadata) vfs.FileInfo {
@@ -82,6 +64,7 @@ func (fs *IRODS) makeCollectionFileInfo(collection *api.Collection, access []api
 		group:         fs.ResolveUID(collection.Owner),
 		extendedAttrs: attrs,
 		permissionSet: permissionSet(fs.getPermission(access, fs.Username(), true)),
+		sys:           collection,
 	}
 }
 
@@ -102,6 +85,7 @@ func (fs *IRODS) makeDataObjectFileInfo(dataobject *api.DataObject, access []api
 		group:         fs.ResolveUID(dataobject.Replicas[0].Owner),
 		extendedAttrs: attrs,
 		permissionSet: permissionSet(fs.getPermission(access, fs.Username(), true)),
+		sys:           dataobject,
 	}
 }
 
