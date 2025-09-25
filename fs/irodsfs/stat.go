@@ -78,8 +78,8 @@ func (fs *IRODS) makeCollectionFileInfo(collection *api.Collection, access []api
 		name:          name,
 		modTime:       collection.ModifiedAt,
 		mode:          fs.getFileMode(collection.Owner, access, true),
-		owner:         fs.resolveUID(fs.Username()),
-		group:         fs.resolveUID(collection.Owner),
+		owner:         fs.ResolveUID(fs.Username()),
+		group:         fs.ResolveUID(collection.Owner),
 		extendedAttrs: attrs,
 		permissionSet: permissionSet(fs.getPermission(access, fs.Username(), true)),
 	}
@@ -98,8 +98,8 @@ func (fs *IRODS) makeDataObjectFileInfo(dataobject *api.DataObject, access []api
 		sizeInBytes:   dataobject.Replicas[0].Size,
 		modTime:       dataobject.Replicas[0].ModifiedAt,
 		mode:          fs.getFileMode(dataobject.Replicas[0].Owner, access, false),
-		owner:         fs.resolveUID(fs.Username()),
-		group:         fs.resolveUID(dataobject.Replicas[0].Owner),
+		owner:         fs.ResolveUID(fs.Username()),
+		group:         fs.ResolveUID(dataobject.Replicas[0].Owner),
 		extendedAttrs: attrs,
 		permissionSet: permissionSet(fs.getPermission(access, fs.Username(), true)),
 	}
@@ -124,7 +124,7 @@ func (fs *IRODS) getPermission(access []api.Access, username string, resolveGrou
 	names := []string{username}
 
 	if resolveGroups {
-		names = append(names, fs.resolveGroups(username)...)
+		names = append(names, fs.ResolveGroups(username)...)
 	}
 
 	permission := Null
@@ -159,7 +159,7 @@ func permToOctal(perm Permission, isdir bool) os.FileMode {
 	}
 }
 
-func (fs *IRODS) resolveGroups(username string) []string {
+func (fs *IRODS) ResolveGroups(username string) []string {
 	value, ok := fs.groupCache.Load(username)
 	if ok {
 		v, _ := value.([]string)
@@ -198,7 +198,7 @@ func (fs *IRODS) resolveGroups(username string) []string {
 	return out
 }
 
-func (fs *IRODS) resolveUID(username string) int {
+func (fs *IRODS) ResolveUID(username string) int {
 	value, ok := fs.uidCache.Load(username)
 	if ok {
 		v, _ := value.(int)

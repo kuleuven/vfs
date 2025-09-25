@@ -116,8 +116,8 @@ func (handle *IRODSFileHandle) Stat() (vfs.FileInfo, error) {
 		sizeInBytes:   actualSize,
 		modTime:       time.Now(),
 		mode:          handle.fs.getFileMode(handle.dataobject.Replicas[0].Owner, access, false),
-		owner:         handle.fs.resolveUID(handle.fs.Username()),
-		group:         handle.fs.resolveUID(handle.dataobject.Replicas[0].Owner),
+		owner:         handle.fs.ResolveUID(handle.fs.Username()),
+		group:         handle.fs.ResolveUID(handle.dataobject.Replicas[0].Owner),
 		extendedAttrs: attrs,
 		permissionSet: permissionSet(handle.fs.getPermission(access, handle.fs.Username(), true)),
 	}, nil
