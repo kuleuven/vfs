@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/kuleuven/vfs"
 	"github.com/kuleuven/vfs/io/readerat"
@@ -44,7 +45,19 @@ func NewPipe(r io.Reader, w io.WriteCloser) (*SFTP, error) {
 }
 
 type SFTP struct {
-	*sftp.Client
+	Client *sftp.Client
+}
+
+func (s *SFTP) Chmod(path string, mode os.FileMode) error {
+	return NormalizeError(s.Client.Chmod(path, mode))
+}
+
+func (s *SFTP) Chown(path string, uid, gid int) error {
+	return NormalizeError(s.Client.Chown(path, uid, gid))
+}
+
+func (s *SFTP) Chtimes(path string, atime, mtime time.Time) error {
+	return NormalizeError(s.Client.Chtimes(path, atime, mtime))
 }
 
 func (s *SFTP) FileRead(path string) (vfs.ReaderAt, error) {
@@ -56,7 +69,7 @@ func (s *SFTP) FileRead(path string) (vfs.ReaderAt, error) {
 	}{
 		ReaderAt: readerat.ReaderAt(f),
 		Closer:   f,
-	}, err
+	}, NormalizeError(err)
 }
 
 func (s *SFTP) FileWrite(path string, flags int) (vfs.WriterAt, error) {
@@ -68,15 +81,15 @@ func (s *SFTP) FileWrite(path string, flags int) (vfs.WriterAt, error) {
 	}{
 		WriterAt: writerat.WriterAt(f),
 		Closer:   f,
-	}, err
+	}, NormalizeError(err)
 }
 
 var ErrTypeAssertion = errors.New("type assertion failed")
 
 func (s *SFTP) List(path string) (vfs.ListerAt, error) {
-	entries, err := s.ReadDir(path)
+	entries, err := s.Client.ReadDir(path)
 	if err != nil {
-		return nil, err
+		return nil, NormalizeError(err)
 	}
 
 	enriched := make([]vfs.FileInfo, len(entries))
@@ -96,13 +109,21 @@ func (s *SFTP) List(path string) (vfs.ListerAt, error) {
 	return vfs.FileInfoListerAt(enriched), nil
 }
 
+func (s *SFTP) Link(target, path string) error {
+	return NormalizeError(s.Client.Link(target, path))
+}
+
+func (s *SFTP) Symlink(target, path string) error {
+	return NormalizeError(s.Client.Symlink(target, path))
+}
+
 func (s *SFTP) Mkdir(path string, perm os.FileMode) error {
 	if err := s.Client.Mkdir(path); err != nil {
-		return err
+		return NormalizeError(err)
 	}
 
 	if err := s.Chmod(path, perm); err != nil {
-		err = multierr.Append(err, s.RemoveDirectory(path))
+		err = multierr.Append(err, s.Rmdir(path))
 
 		return err
 	}
@@ -111,13 +132,27 @@ func (s *SFTP) Mkdir(path string, perm os.FileMode) error {
 }
 
 func (s *SFTP) Rmdir(path string) error {
-	return s.RemoveDirectory(path)
+	return NormalizeError(s.Client.RemoveDirectory(path))
+}
+
+func (s *SFTP) Remove(path string) error {
+	return NormalizeError(s.Client.Remove(path))
+}
+
+func (s *SFTP) Rename(oldpath, newpath string) error {
+	return NormalizeError(s.Client.Rename(oldpath, newpath))
+}
+
+func (s *SFTP) RealPath(path string) (string, error) {
+	target, err := s.Client.RealPath(path)
+
+	return target, NormalizeError(err)
 }
 
 func (s *SFTP) Stat(path string) (vfs.FileInfo, error) {
 	stat, err := s.Client.Stat(path)
 	if err != nil {
-		return nil, err
+		return nil, NormalizeError(err)
 	}
 
 	sys, ok := stat.Sys().(*sftp.FileStat)
@@ -134,7 +169,7 @@ func (s *SFTP) Stat(path string) (vfs.FileInfo, error) {
 func (s *SFTP) Lstat(path string) (vfs.FileInfo, error) {
 	stat, err := s.Client.Lstat(path)
 	if err != nil {
-		return nil, err
+		return nil, NormalizeError(err)
 	}
 
 	sys, ok := stat.Sys().(*sftp.FileStat)
@@ -148,18 +183,22 @@ func (s *SFTP) Lstat(path string) (vfs.FileInfo, error) {
 	}, nil
 }
 
+func (s *SFTP) Truncate(path string, size int64) error {
+	return NormalizeError(s.Client.Truncate(path, size))
+}
+
 func (s *SFTP) OpenFile(path string, flag int, perm os.FileMode) (vfs.File, error) {
 	if flag&os.O_WRONLY == 0 && flag&os.O_RDWR == 0 { // Just read file
 		f, err := s.Client.OpenFile(path, flag)
 
-		return &SFTPFile{c: s, File: f}, err
+		return &SFTPFile{c: s, File: f}, NormalizeError(err)
 	}
 
 	f, err := s.Client.OpenFile(path, flag|os.O_EXCL)
 	if isErrExist(err) && flag&os.O_EXCL == 0 {
 		f, err = s.Client.OpenFile(path, flag&^os.O_CREATE)
 		if err != nil {
-			return nil, err
+			return nil, NormalizeError(err)
 		}
 
 		return &SFTPFile{c: s, File: f}, nil
@@ -202,14 +241,16 @@ func (s *SFTP) Open(path string) (vfs.File, error) {
 
 	f, err := s.Client.OpenFile(path, os.O_RDONLY)
 	if err != nil {
-		return nil, err
+		return nil, NormalizeError(err)
 	}
 
 	return &SFTPFile{s, f}, nil
 }
 
 func (s *SFTP) Readlink(path string) (string, error) {
-	return s.ReadLink(path)
+	target, err := s.Client.ReadLink(path)
+
+	return target, NormalizeError(err)
 }
 
 func (s *SFTP) NumLinks(path string) (uint64, error) {
@@ -268,7 +309,7 @@ func (s *SFTP) SetExtendedAttrs(path string, attrs vfs.Attributes) error {
 		})
 	}
 
-	return s.SetExtendedData(path, sftpAttrs)
+	return NormalizeError(s.Client.SetExtendedData(path, sftpAttrs))
 }
 
 var LookupPrefix = "lookup"
@@ -292,6 +333,10 @@ func (s *SFTP) Path(handle []byte) (string, error) {
 	return s.RealPath(InodePrefix + hex.EncodeToString(handle))
 }
 
+func (s *SFTP) Close() error {
+	return s.Client.Close()
+}
+
 type SFTPFile struct {
 	c *SFTP
 	*sftp.File
@@ -300,7 +345,7 @@ type SFTPFile struct {
 func (f *SFTPFile) Stat() (vfs.FileInfo, error) {
 	stat, err := f.File.Stat()
 	if err != nil {
-		return nil, err
+		return nil, NormalizeError(err)
 	}
 
 	sys, ok := stat.Sys().(*sftp.FileStat)
@@ -353,9 +398,9 @@ func (d *SFTPDirectory) Truncate(int64) error {
 }
 
 func (d *SFTPDirectory) Readdir(n int) ([]vfs.FileInfo, error) {
-	entries, err := d.c.ReadDir(d.name)
+	entries, err := d.c.Client.ReadDir(d.name)
 	if err != nil {
-		return nil, err
+		return nil, NormalizeError(err)
 	}
 
 	if len(entries) > n && n > 0 {
@@ -376,7 +421,7 @@ func (d *SFTPDirectory) Readdir(n int) ([]vfs.FileInfo, error) {
 		}
 	}
 
-	return enriched, err
+	return enriched, nil
 }
 
 func (d *SFTPDirectory) Stat() (vfs.FileInfo, error) {
