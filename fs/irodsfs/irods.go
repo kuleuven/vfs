@@ -652,6 +652,10 @@ func (fs *IRODS) Stat(path string) (vfs.FileInfo, error) {
 			name:    vfs.Base(path),
 			modTime: time.Now(),
 			mode:    os.FileMode(0o755) | os.ModeDir,
+			permissionSet: &vfs.Permissions{
+				Read:             true,
+				GetExtendedAttrs: true,
+			},
 		}, nil
 	}
 
