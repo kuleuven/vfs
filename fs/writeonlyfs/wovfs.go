@@ -39,11 +39,6 @@ func New(ctx context.Context, parent vfs.FS, username string) vfs.FS {
 func NewAt(ctx context.Context, parent vfs.FS, at, username string) vfs.FS {
 	at = strings.TrimSuffix(at, "/")
 
-	// TODO: This is problematic. Replace it with something better
-	/*if err := vfs.MkdirAll(orig, at, 0o755); err != nil {
-		return errorfs.New(err)
-	}*/
-
 	if at != "" {
 		parent = wrapfs.Sub(parent, at)
 	}
