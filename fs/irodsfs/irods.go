@@ -17,6 +17,7 @@ import (
 	"github.com/kuleuven/iron/msg"
 	"github.com/kuleuven/vfs"
 	"github.com/kuleuven/vfs/io/buffered"
+	"go.uber.org/multierr"
 )
 
 var _ vfs.OpenFileFS = &IRODS{}
@@ -251,9 +252,7 @@ func (fs *IRODS) Truncate(path string, size int64) error {
 		return err
 	}
 
-	defer handle.Close()
-
-	return handle.Truncate(size)
+	return multierr.Append(handle.Truncate(size), handle.Close())
 }
 
 func (fs *IRODS) Chown(path string, uid, gid int) error {

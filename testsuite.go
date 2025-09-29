@@ -150,7 +150,7 @@ func testStat(t *testing.T, fs FS) {
 	}
 
 	// Test permissions if available
-	if perms, err := finfo.Permissions(); err == nil {
+	if perms, err := finfo.Permissions(); err == nil && perms != nil {
 		t.Logf("Permissions: read=%v, write=%v, delete=%v, own=%v",
 			perms.Read, perms.Write, perms.Delete, perms.Own)
 	}
