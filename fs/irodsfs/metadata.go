@@ -15,7 +15,11 @@ const metaPrefixACL = "user.irods.acl."
 
 const metaInherit = "user.irods.inherit"
 
-func (fs *IRODS) Linearize(meta []api.Metadata, access []api.Access) vfs.Attributes {
+func (fs *IRODS) Linearize(metadata []api.Metadata, access []api.Access) vfs.Attributes {
+	return Linearize(metadata, access, fs.Client.Zone)
+}
+
+func Linearize(meta []api.Metadata, access []api.Access, defaultZone string) vfs.Attributes {
 	seen := map[string]int{}
 	result := vfs.Attributes{}
 
@@ -44,7 +48,7 @@ func (fs *IRODS) Linearize(meta []api.Metadata, access []api.Access) vfs.Attribu
 			continue // Skip unresolvable users
 		}
 
-		name := fs.formatUser(a.User.Name, a.User.Zone)
+		name := formatUser(a.User.Name, a.User.Zone, defaultZone)
 
 		result.Set(metaPrefixACL+name, []byte(a.Permission))
 	}
@@ -53,6 +57,10 @@ func (fs *IRODS) Linearize(meta []api.Metadata, access []api.Access) vfs.Attribu
 }
 
 func (fs *IRODS) Delinearize(values vfs.Attributes) ([]api.Metadata, []api.Access) {
+	return Delinearize(values, fs.Client.Zone)
+}
+
+func Delinearize(values vfs.Attributes, defaultZone string) ([]api.Metadata, []api.Access) {
 	meta := []api.Metadata{}
 	acl := []api.Access{}
 
@@ -62,7 +70,7 @@ func (fs *IRODS) Delinearize(values vfs.Attributes) ([]api.Metadata, []api.Acces
 
 	for key, value := range values {
 		if strings.HasPrefix(key, metaPrefixACL) {
-			username, zone := fs.parseUser(strings.TrimPrefix(key, metaPrefixACL))
+			username, zone := parseUser(strings.TrimPrefix(key, metaPrefixACL), defaultZone)
 
 			acl = append(acl, api.Access{
 				User: api.User{

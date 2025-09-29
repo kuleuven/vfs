@@ -215,20 +215,20 @@ func (fs *IRODS) ResolveUID(username string) int {
 	return uid
 }
 
-func (fs *IRODS) formatUser(user, zone string) string {
-	if zone == "" || zone == fs.Client.Env().Zone {
+func formatUser(user, zone, defaultZone string) string {
+	if zone == "" || zone == defaultZone {
 		return user
 	}
 
 	return fmt.Sprintf("%s#%s", user, zone)
 }
 
-func (fs *IRODS) parseUser(user string) (string, string) {
+func parseUser(user, defaultZone string) (string, string) {
 	if strings.Contains(user, "#") {
 		parts := strings.SplitN(user, "#", 2)
 
 		return parts[0], parts[1]
 	}
 
-	return user, fs.Client.Env().Zone
+	return user, defaultZone
 }

@@ -73,6 +73,9 @@ func New(ctx context.Context, zone string, client *iron.Client, options ...Optio
 		Client:    client,
 	}
 
+	// Ensure zone is always set
+	client.Zone = zone
+
 	// From context
 	if v, ok := ctx.Value(OpenFileAllowedPaths).([]string); ok {
 		fs.OpenFileAllowedPaths = v
@@ -412,7 +415,7 @@ func (fs *IRODS) SetExtendedAttrs(path string, attrs vfs.Attributes) error {
 	for name, value := range attrs {
 		switch {
 		case strings.HasPrefix(name, metaPrefixACL):
-			username, zone := fs.parseUser(strings.TrimPrefix(name, metaPrefixACL))
+			username, zone := parseUser(strings.TrimPrefix(name, metaPrefixACL), fs.Client.Zone)
 
 			acl = append(acl, api.Access{
 				User: api.User{
