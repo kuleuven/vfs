@@ -392,7 +392,7 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 	}
 
 	if !finfo.IsDir() {
-		t.Error("Created path should be a directory")
+		t.Fatal("Created path should be a directory")
 	}
 
 	// Test nested directory creation

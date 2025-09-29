@@ -3,6 +3,7 @@ package vfs
 import (
 	"errors"
 	"io"
+	"iter"
 )
 
 type FileInfoListerAt []FileInfo
@@ -49,5 +50,32 @@ func ListAll(lister ListerAt) ([]FileInfo, error) {
 		}
 
 		offset += int64(n)
+	}
+}
+
+func Iterate(lister ListerAt, batchSize int) iter.Seq[FileInfo] {
+	return func(yield func(FileInfo) bool) {
+		buf := make([]FileInfo, batchSize)
+
+		var offset int64
+
+		for {
+			n, err := lister.ListAt(buf, offset)
+			if err != nil && !errors.Is(err, io.EOF) {
+				return
+			}
+
+			for _, entry := range buf[:n] {
+				if !yield(entry) {
+					return
+				}
+			}
+
+			if n == 0 || errors.Is(err, io.EOF) {
+				return
+			}
+
+			offset += int64(n)
+		}
 	}
 }
