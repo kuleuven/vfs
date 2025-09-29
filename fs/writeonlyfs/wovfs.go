@@ -329,3 +329,55 @@ func GetAttr(m vfs.Attributes, key string) string {
 func (w *wrap) Close() error {
 	return w.orig.Close()
 }
+
+func (w *wrap) SetExtendedAttr(path, name string, value []byte) error {
+	if _, err := w.Stat(path); err != nil {
+		return err
+	}
+
+	if name == userMeta || name == timestampMeta {
+		return os.ErrPermission
+	}
+
+	return w.orig.SetExtendedAttr(path, name, value)
+}
+
+func (w *wrap) UnsetExtendedAttr(path, name string) error {
+	if _, err := w.Stat(path); err != nil {
+		return err
+	}
+
+	if name == userMeta || name == timestampMeta {
+		return os.ErrPermission
+	}
+
+	return w.orig.UnsetExtendedAttr(path, name)
+}
+
+func (w *wrap) SetExtendedAttrs(path string, attrs vfs.Attributes) error {
+	fi, err := w.Stat(path)
+	if err != nil {
+		return err
+	}
+
+	current, err := fi.Extended()
+	if err != nil {
+		return err
+	}
+
+	user, ok := current.Get(userMeta)
+	if !ok {
+		return os.ErrPermission
+	}
+
+	attrs.Set(userMeta, user)
+
+	timestamp, ok := current.Get(timestampMeta)
+	if !ok {
+		return os.ErrPermission
+	}
+
+	attrs.Set(timestampMeta, timestamp)
+
+	return vfs.SetExtendedAttrs(w.orig, path, attrs)
+}

@@ -144,13 +144,17 @@ func testStat(t *testing.T, fs FS) {
 
 	t.Logf("Root info: %s (size: %d, mode: %v)", finfo.Name(), finfo.Size(), finfo.Mode())
 
-	// Test extended attributes if available
-	if attrs, err := finfo.Extended(); err == nil {
+	// Test extended attributes
+	if attrs, err := finfo.Extended(); err != nil {
+		t.Errorf("Failed to get extended attributes: %v", err)
+	} else {
 		t.Logf("Extended attributes available: %d attrs", len(attrs))
 	}
 
-	// Test permissions if available
-	if perms, err := finfo.Permissions(); err == nil && perms != nil {
+	// Test permissions
+	if perms, err := finfo.Permissions(); err != nil || perms == nil {
+		t.Errorf("Failed to get permissions: %v", err)
+	} else {
 		t.Logf("Permissions: read=%v, write=%v, delete=%v, own=%v",
 			perms.Read, perms.Write, perms.Delete, perms.Own)
 	}
@@ -481,7 +485,7 @@ func testPermissionOperations(t *testing.T, fs FS) {
 
 	// Test chmod
 	if err := fs.Chmod(testFile, 0o644); err != nil {
-		t.Logf("Chmod not supported or failed: %v", err)
+		t.Errorf("Chmod not supported or failed: %v", err)
 	}
 
 	// Test chown (might not be supported in many implementations)
@@ -502,7 +506,7 @@ func testTimeOperations(t *testing.T, fs FS) {
 	newTime := time.Now().Add(-24 * time.Hour)
 
 	if err := fs.Chtimes(testFile, newTime, newTime); err != nil {
-		t.Logf("Chtimes not supported or failed: %v", err)
+		t.Errorf("Chtimes not supported or failed: %v", err)
 		return
 	}
 
@@ -606,7 +610,7 @@ func testTruncateOperations(t *testing.T, fs FS) {
 
 func testExtendedAttributes(t *testing.T, fs FS) {
 	testFile := "/test_xattrs.txt"
-	attrName := "user.test"
+	attrName := "user.meta.test"
 	attrValue := []byte("test value")
 
 	// Create test file
@@ -616,7 +620,7 @@ func testExtendedAttributes(t *testing.T, fs FS) {
 
 	// Set extended attribute
 	if err := fs.SetExtendedAttr(testFile, attrName, attrValue); err != nil {
-		t.Logf("SetExtendedAttr not supported or failed: %v", err)
+		t.Errorf("SetExtendedAttr not supported or failed: %v", err)
 
 		return
 	}
@@ -627,21 +631,30 @@ func testExtendedAttributes(t *testing.T, fs FS) {
 		t.Fatal(err)
 	}
 
-	if attrs, err := finfo.Extended(); err == nil {
-		if value, ok := attrs.Get(attrName); ok {
-			if !bytes.Equal(value, attrValue) {
-				t.Errorf("Expected xattr value '%s', got '%s'",
-					string(attrValue), string(value))
-			}
-		} else {
-			t.Log("Extended attribute not found after setting")
+	attrs, err := finfo.Extended()
+	if err != nil {
+		t.Fatalf("Failed to get extended attributes: %v", err)
+	}
+
+	if len(attrs) == 0 {
+		t.Skip("Extended attributes not supported")
+	}
+
+	t.Logf("Extended attributes available: %d attrs %v", len(attrs), attrs)
+
+	if value, ok := attrs.Get(attrName); ok {
+		if !bytes.Equal(value, attrValue) {
+			t.Errorf("Expected xattr value '%s', got '%s'",
+				string(attrValue), string(value))
 		}
+	} else {
+		t.Error("Extended attribute not found after setting")
 	}
 
 	// Unset extended attribute
 	err = fs.UnsetExtendedAttr(testFile, attrName)
 	if err != nil {
-		t.Logf("UnsetExtendedAttr failed: %v", err)
+		t.Errorf("UnsetExtendedAttr failed: %v", err)
 	}
 }
 
@@ -913,14 +926,14 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 
 	// Set multiple extended attributes at once
 	attrs := Attributes{
-		"user.test1": []byte("value1"),
-		"user.test2": []byte("value2"),
-		"user.test3": []byte("value3"),
+		"user.meta.test1": []byte("value1"),
+		"user.meta.test2": []byte("value2"),
+		"user.meta.test3": []byte("value3"),
 	}
 
 	err := seafs.SetExtendedAttrs(testFile, attrs)
 	if err != nil {
-		t.Logf("SetExtendedAttrs not supported or failed: %v", err)
+		t.Errorf("SetExtendedAttrs not supported or failed: %v", err)
 
 		return
 	}
@@ -936,6 +949,10 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 		t.Fatal(err)
 	}
 
+	if len(readAttrs) == 0 {
+		t.Skip("Extended attributes not supported")
+	}
+
 	for name, expectedValue := range attrs {
 		if actualValue, ok := readAttrs.Get(name); ok {
 			if !bytes.Equal(actualValue, expectedValue) {
@@ -943,7 +960,7 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 					name, string(expectedValue), string(actualValue))
 			}
 		} else {
-			t.Logf("Attribute %s not found after batch set", name)
+			t.Errorf("Attribute %s not found after batch set", name)
 		}
 	}
 }
