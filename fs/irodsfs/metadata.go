@@ -56,16 +56,17 @@ func Linearize(meta []api.Metadata, access []api.Access, defaultZone string) vfs
 	return result
 }
 
-func (fs *IRODS) Delinearize(values vfs.Attributes) ([]api.Metadata, []api.Access) {
+func (fs *IRODS) Delinearize(values vfs.Attributes) ([]api.Metadata, []api.Access, vfs.Attributes) {
 	return Delinearize(values, fs.Client.Zone)
 }
 
-func Delinearize(values vfs.Attributes, defaultZone string) ([]api.Metadata, []api.Access) {
+func Delinearize(values vfs.Attributes, defaultZone string) ([]api.Metadata, []api.Access, vfs.Attributes) {
 	meta := []api.Metadata{}
 	acl := []api.Access{}
+	rest := vfs.Attributes{}
 
 	if values == nil {
-		return meta, acl
+		return meta, acl, rest
 	}
 
 	for key, value := range values {
@@ -84,6 +85,8 @@ func Delinearize(values vfs.Attributes, defaultZone string) ([]api.Metadata, []a
 		}
 
 		if !strings.HasPrefix(key, metaPrefix) {
+			rest.Set(key, value)
+
 			continue
 		}
 
@@ -100,7 +103,7 @@ func Delinearize(values vfs.Attributes, defaultZone string) ([]api.Metadata, []a
 		})
 	}
 
-	return meta, acl
+	return meta, acl, rest
 }
 
 func escape(unit string) string {
