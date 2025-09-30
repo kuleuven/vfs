@@ -403,6 +403,14 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 		t.Fatal(err)
 	}
 
+	// Test nested directory creation
+	nestedDir2 := testDir + "/nested/deep2"
+
+	err = MkdirAll(fs, nestedDir2, 0o755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	// Create a file in the directory
 	testFile := testDir + "/test_file.txt"
 
