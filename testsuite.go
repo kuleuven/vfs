@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 )
@@ -396,19 +397,15 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 	}
 
 	// Test nested directory creation
-	nestedDir := testDir + "/nested/deep"
-
-	err = MkdirAll(fs, nestedDir, 0o755)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Test nested directory creation
-	nestedDir2 := testDir + "/nested/deep2"
-
-	err = MkdirAll(fs, nestedDir2, 0o755)
-	if err != nil {
-		t.Fatal(err)
+	for _, nestedDir := range []string{
+		testDir + "/nested",
+		testDir + "/nested/deep",
+		testDir + "/nested/deep2",
+	} {
+		err = fs.Mkdir(nestedDir, 0o755)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	// Create a file in the directory
@@ -444,17 +441,7 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 
 	lister.Close()
 
-	found := false
-
-	for _, finfo := range buf[:n] {
-		t.Logf("Directory content: %s", finfo.Name())
-
-		if finfo.Name() == "test_file.txt" {
-			found = true
-		}
-	}
-
-	if !found {
+	if !slices.ContainsFunc(buf[:n], func(finfo FileInfo) bool { return finfo.Name() == "test_file.txt" }) {
 		t.Error("Created file not found in directory listing")
 	}
 
@@ -927,7 +914,13 @@ func testWalkFS(t *testing.T, wfs WalkFS) {
 	}
 }
 
-func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) { //nolint:funlen
+const (
+	testmeta1 = "user.meta.test1"
+	testmeta2 = "user.meta.test2"
+	testmeta3 = "user.meta.test3"
+)
+
+func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 	testFile := "/test_set_xattrs.txt"
 
 	// Create test file
@@ -937,9 +930,9 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) { //nolint:f
 
 	// Set multiple extended attributes at once
 	attrs := Attributes{
-		"user.meta.test1": []byte("value1"),
-		"user.meta.test2": []byte("value2"),
-		"user.meta.test3": []byte("value3"),
+		testmeta1: []byte("value1"),
+		testmeta2: []byte("value2"),
+		testmeta3: []byte("value3"),
 	}
 
 	err := seafs.SetExtendedAttrs(testFile, attrs)
@@ -964,19 +957,10 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) { //nolint:f
 		t.Skip("Extended attributes not supported")
 	}
 
-	for name, expectedValue := range attrs {
-		if actualValue, ok := readAttrs.Get(name); ok {
-			if !bytes.Equal(actualValue, expectedValue) {
-				t.Errorf("Attribute %s: expected '%s', got '%s'",
-					name, string(expectedValue), string(actualValue))
-			}
-		} else {
-			t.Errorf("Attribute %s not found after batch set", name)
-		}
-	}
+	verifyAttrs(t, readAttrs, attrs)
 
 	attrs = Attributes{
-		"user.meta.test1": []byte("value1"),
+		testmeta1: []byte("value1"),
 	}
 
 	err = seafs.SetExtendedAttrs(testFile, attrs)
@@ -997,16 +981,28 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) { //nolint:f
 		t.Fatal(err)
 	}
 
-	if val, ok := readAttrs.GetString("user.meta.test1"); !ok || val != "value1" {
-		t.Errorf("Attribute user.meta.test1: expected 'value1', got '%s'", val)
-	}
+	verifyAttrs(t, readAttrs, attrs)
+	verifyAbsent(t, readAttrs, testmeta2, testmeta3)
+}
 
-	if val, ok := readAttrs.GetString("user.meta.test2"); ok {
-		t.Errorf("Attribute user.meta.test2: expected not present, got '%s'", val)
+func verifyAttrs(t *testing.T, readAttrs, attrs Attributes) {
+	for name, expectedValue := range attrs {
+		if actualValue, ok := readAttrs.Get(name); ok {
+			if !bytes.Equal(actualValue, expectedValue) {
+				t.Errorf("Attribute %s: expected '%s', got '%s'",
+					name, string(expectedValue), string(actualValue))
+			}
+		} else {
+			t.Errorf("Attribute %s not found after batch set", name)
+		}
 	}
+}
 
-	if val, ok := readAttrs.GetString("user.meta.test3"); ok {
-		t.Errorf("Attribute user.meta.test3: expected not present, got '%s'", val)
+func verifyAbsent(t *testing.T, readAttrs Attributes, names ...string) {
+	for _, name := range names {
+		if _, ok := readAttrs.Get(name); ok {
+			t.Errorf("Attribute %s: expected not present", name)
+		}
 	}
 }
 

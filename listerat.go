@@ -57,12 +57,15 @@ func Iterate(lister ListerAt, batchSize int) iter.Seq[FileInfo] {
 	return func(yield func(FileInfo) bool) {
 		buf := make([]FileInfo, batchSize)
 
-		var offset int64
+		var (
+			n   int
+			err error
+		)
 
-		for {
-			n, err := lister.ListAt(buf, offset)
+		for offset := int64(0); err == nil; offset += int64(n) {
+			n, err = lister.ListAt(buf, offset)
 			if err != nil && !errors.Is(err, io.EOF) {
-				return
+				break
 			}
 
 			for _, entry := range buf[:n] {
@@ -70,12 +73,6 @@ func Iterate(lister ListerAt, batchSize int) iter.Seq[FileInfo] {
 					return
 				}
 			}
-
-			if n == 0 || errors.Is(err, io.EOF) {
-				return
-			}
-
-			offset += int64(n)
 		}
 	}
 }
