@@ -924,7 +924,7 @@ func testWalkFS(t *testing.T, wfs WalkFS) {
 	}
 }
 
-func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
+func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) { //nolint:funlen
 	testFile := "/test_set_xattrs.txt"
 
 	// Create test file
@@ -970,6 +970,40 @@ func testSetExtendedAttrsFS(t *testing.T, seafs SetExtendedAttrsFS) {
 		} else {
 			t.Errorf("Attribute %s not found after batch set", name)
 		}
+	}
+
+	attrs = Attributes{
+		"user.meta.test1": []byte("value1"),
+	}
+
+	err = seafs.SetExtendedAttrs(testFile, attrs)
+	if err != nil {
+		t.Errorf("SetExtendedAttrs not supported or failed: %v", err)
+
+		return
+	}
+
+	// Verify attributes were set
+	finfo, err = seafs.Stat(testFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	readAttrs, err = finfo.Extended()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if val, ok := readAttrs.GetString("user.meta.test1"); !ok || val != "value1" {
+		t.Errorf("Attribute user.meta.test1: expected 'value1', got '%s'", val)
+	}
+
+	if val, ok := readAttrs.GetString("user.meta.test2"); ok {
+		t.Errorf("Attribute user.meta.test2: expected not present, got '%s'", val)
+	}
+
+	if val, ok := readAttrs.GetString("user.meta.test3"); ok {
+		t.Errorf("Attribute user.meta.test3: expected not present, got '%s'", val)
 	}
 }
 
