@@ -751,6 +751,10 @@ func (fs *IRODS) Path(handle []byte) (string, error) {
 			return "", err
 		}
 
+		if coll == "/" {
+			return "/" + name, nil
+		}
+
 		return coll + "/" + name, nil
 	}
 
