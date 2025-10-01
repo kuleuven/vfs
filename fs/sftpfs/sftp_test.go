@@ -31,9 +31,11 @@ func TestSFTP(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer server.Close()
+	go func() {
+		defer server.Close()
 
-	go server.Serve()
+		server.Serve()
+	}()
 
 	fs, err := NewPipe(r2, w1)
 	if err != nil {
