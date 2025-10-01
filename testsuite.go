@@ -451,7 +451,7 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 	}
 
 	// Clean up
-	err = RemoveAll(fs, testFile)
+	err = RemoveAll(fs, testDir)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -219,6 +219,7 @@ func ReadDir(fs WalkableFS, dirname string) ([]FileInfo, error) {
 type WalkRemoveFS interface {
 	WalkableFS
 	Remove(path string) error
+	Rmdir(path string) error
 }
 
 func RemoveAll(fs WalkRemoveFS, path string) error {
@@ -240,7 +241,7 @@ func RemoveAll(fs WalkRemoveFS, path string) error {
 	slices.Reverse(dirs)
 
 	for _, dir := range dirs {
-		if err := fs.Remove(dir); err != nil {
+		if err := fs.Rmdir(dir); err != nil {
 			return err
 		}
 	}
