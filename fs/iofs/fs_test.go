@@ -8,5 +8,13 @@ import (
 )
 
 func TestIOFS(t *testing.T) {
-	vfs.RunTestSuiteRO(t, New(afero.NewIOFS(afero.NewOsFs())))
+	fs := New(afero.NewIOFS(afero.NewOsFs()))
+
+	defer func() {
+		if err := fs.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	vfs.RunTestSuiteRO(t, fs)
 }

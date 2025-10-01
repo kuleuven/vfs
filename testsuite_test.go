@@ -10,7 +10,11 @@ import (
 )
 
 func TestNativeFS(t *testing.T) {
-	vfs.RunTestSuiteRW(t, nativefs.New(t.Context(), t.TempDir()))
+	fs := nativefs.New(t.Context(), t.TempDir())
+
+	defer fs.Close()
+
+	vfs.RunTestSuiteRW(t, fs)
 }
 
 func TestRootFS(t *testing.T) {
@@ -18,6 +22,8 @@ func TestRootFS(t *testing.T) {
 	root := rootfs.New(ctx)
 
 	root.MustMount("/", nativefs.New(ctx, t.TempDir()), 0)
+
+	defer root.Close()
 
 	vfs.RunTestSuiteRW(t, root)
 }

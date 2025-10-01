@@ -14,7 +14,11 @@ func TestRootNativeFS(t *testing.T) {
 
 	root := New(ctx)
 
-	defer root.Close()
+	defer func() {
+		if err := root.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
 
 	dir := t.TempDir()
 
@@ -38,7 +42,11 @@ func TestRootNativeFSServerInodes(t *testing.T) {
 
 	root := New(ctx)
 
-	defer root.Close()
+	defer func() {
+		if err := root.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
 
 	dir := t.TempDir()
 

@@ -42,5 +42,11 @@ func TestSFTP(t *testing.T) {
 
 	sub := wrapfs.Sub(fs, t.TempDir())
 
+	defer func() {
+		if err := sub.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
 	vfs.RunTestSuiteRW(t, sub)
 }

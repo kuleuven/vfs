@@ -16,6 +16,13 @@ func TestSubdir(t *testing.T) {
 	}
 
 	top := nativefs.New(t.Context(), dir)
+	sub := Sub(top, "/subdir")
 
-	vfs.RunTestSuiteRW(t, Sub(top, "/subdir"))
+	defer func() {
+		if err := sub.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	vfs.RunTestSuiteRW(t, sub)
 }

@@ -7,5 +7,13 @@ import (
 )
 
 func TestEmptyFS(t *testing.T) {
-	vfs.RunTestSuiteRO(t, New())
+	fs := New()
+
+	defer func() {
+		if err := fs.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	vfs.RunTestSuiteRO(t, fs)
 }

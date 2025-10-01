@@ -82,5 +82,11 @@ func TestIrodsFS(t *testing.T) {
 
 	testfs := irodsfs.New(t.Context(), "cobalt", client)
 
+	defer func() {
+		if err := testfs.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
 	vfs.RunTestSuiteRW(t, testfs)
 }

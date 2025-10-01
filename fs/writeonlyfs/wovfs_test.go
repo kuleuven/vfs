@@ -17,5 +17,13 @@ func TestWriteOnlyFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	vfs.RunTestSuiteRW(t, NewAt(ctx, parent, "/tmp", "test"))
+	fs := NewAt(ctx, parent, "/tmp", "test")
+
+	defer func() {
+		if err := fs.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	vfs.RunTestSuiteRW(t, fs)
 }
