@@ -18,7 +18,7 @@ func (f FileInfoListerAt) ListAt(ls []FileInfo, offset int64) (int, error) {
 
 	n = copy(ls, f[offset:])
 
-	if n < len(ls) {
+	if n < len(ls) || offset+int64(n) >= int64(len(f)) {
 		return n, io.EOF
 	}
 
