@@ -561,6 +561,12 @@ func testRenameOperations(t *testing.T, fs FS) {
 		t.Errorf("Renamed file has wrong content: expected '%s', got '%s'",
 			testContent, string(buf))
 	}
+
+	// Clean up
+	err = RemoveAll(fs, newPath)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
 func testTruncateOperations(t *testing.T, fs FS) {

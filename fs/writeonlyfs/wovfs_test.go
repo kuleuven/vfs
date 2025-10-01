@@ -17,13 +17,15 @@ func TestWriteOnlyFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs := NewAt(ctx, parent, "/tmp", "test")
+	for range 2 {
+		fs := NewAt(ctx, parent, "/tmp", "test")
 
-	defer func() {
-		if err := fs.Close(); err != nil {
-			t.Error(err)
-		}
-	}()
+		defer func() {
+			if err := fs.Close(); err != nil {
+				t.Error(err)
+			}
+		}()
 
-	vfs.RunTestSuiteRW(t, fs)
+		vfs.RunTestSuiteRW(t, fs)
+	}
 }
