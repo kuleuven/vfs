@@ -732,6 +732,13 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 		t.Errorf("Expected to write %d bytes, wrote %d", len(testContent), n)
 	}
 
+	fi, err := file.Stat()
+	if err != nil {
+		t.Errorf("Stat failed: %v", err)
+	} else if fi.Size() != int64(len(testContent)) {
+		t.Errorf("Expected file size %d, got %d", len(testContent), fi.Size())
+	}
+
 	err = file.Close()
 	if err != nil {
 		t.Fatal(err)

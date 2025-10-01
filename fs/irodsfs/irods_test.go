@@ -11,9 +11,7 @@ import (
 	"github.com/kuleuven/iron"
 	"github.com/kuleuven/vfs"
 	"github.com/kuleuven/vfs/fs/irodsfs"
-	_ "github.com/kuleuven/vfs/fs/irodsfs"
 	"github.com/kuleuven/vfs/fs/nativefs"
-	_ "github.com/kuleuven/vfs/fs/nativefs"
 	"github.com/sirupsen/logrus"
 )
 
