@@ -42,7 +42,9 @@ func TestSFTP(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	sub := wrapfs.Sub(fs, t.TempDir())
+	subdir := t.TempDir()
+
+	sub := wrapfs.Sub(fs, subdir)
 
 	defer func() {
 		if err := sub.Close(); err != nil {
@@ -50,5 +52,21 @@ func TestSFTP(t *testing.T) {
 		}
 	}()
 
-	vfs.RunTestSuiteRW(t, sub)
+	ofsub := &OpenFileSub{
+		FS:     sub,
+		parent: fs,
+		dir:    subdir,
+	}
+
+	vfs.RunTestSuiteRW(t, ofsub)
+}
+
+type OpenFileSub struct {
+	vfs.FS
+	parent vfs.OpenFileFS
+	dir    string
+}
+
+func (f *OpenFileSub) OpenFile(name string, flag int, perm os.FileMode) (vfs.File, error) {
+	return f.parent.OpenFile(vfs.Join(f.dir, name), flag, perm)
 }

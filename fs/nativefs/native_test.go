@@ -1,6 +1,7 @@
 package nativefs
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -17,7 +18,7 @@ func TestNativeFS(t *testing.T) {
 		}
 	}()
 
-	vfs.RunTestSuiteRW(t, New(t.Context(), t.TempDir()))
+	vfs.RunTestSuiteRW(t, fs)
 }
 
 func TestNativeFSAsUser(t *testing.T) {
@@ -39,6 +40,20 @@ func TestNativeFSAsUser(t *testing.T) {
 	}
 
 	fs := NewAsUser(t.Context(), dir, &runas.User{UID: 1000, GID: 1000})
+
+	defer func() {
+		if err := fs.Close(); err != nil {
+			t.Error(err)
+		}
+	}()
+
+	vfs.RunTestSuiteRW(t, fs)
+}
+
+func TestNativeFSWithServerInodes(t *testing.T) {
+	ctx := context.WithValue(t.Context(), vfs.UseServerInodes, true)
+
+	fs := New(ctx, t.TempDir())
 
 	defer func() {
 		if err := fs.Close(); err != nil {

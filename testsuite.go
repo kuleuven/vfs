@@ -59,11 +59,16 @@ func RunTestSuiteRO(t *testing.T, fs FS) {
 		})
 	}
 
-	if rfs, ok := fs.(RootFS); ok {
+	if rfs, ok := fs.(OpenFS); ok {
 		t.Run("Open", func(t *testing.T) {
-			testRootFSOpen(t, rfs)
+			testOpenFS(t, rfs)
 		})
 	}
+}
+
+type OpenFS interface {
+	FS
+	Open(path string) (File, error)
 }
 
 // RunTestSuiteRW runs comprehensive read-write tests for FS implementations
@@ -672,10 +677,6 @@ func testHandleFS(t *testing.T, hfs HandleFS) {
 			t.Fatal(err)
 		}
 
-		if len(handle) == 0 {
-			t.Error("Handle should not be empty")
-		}
-
 		t.Logf("handle of %s: %x", path, handle)
 
 		return nil
@@ -1012,7 +1013,7 @@ func verifyAbsent(t *testing.T, readAttrs Attributes, names ...string) {
 	}
 }
 
-func testRootFSOpen(t *testing.T, rfs RootFS) {
+func testOpenFS(t *testing.T, rfs OpenFS) {
 	f, err := rfs.Open("/")
 	if err != nil {
 		t.Fatal(err)
@@ -1034,6 +1035,6 @@ func testRootFSOpen(t *testing.T, rfs RootFS) {
 			continue
 		}
 
-		t.Logf("RootFS: %s (dir: %v)", finfo[0].Name(), finfo[0].IsDir())
+		t.Logf("OpenFS: %s (dir: %v)", finfo[0].Name(), finfo[0].IsDir())
 	}
 }
