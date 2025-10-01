@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
-	"strings"
 	"syscall"
 
 	"github.com/kuleuven/iron/api"
@@ -152,8 +151,6 @@ func Walk(fs WalkableFS, root string, fn WalkFunc) error {
 	return err
 }
 
-type WalkRelFunc func(path, rel string, info FileInfo, err error) error
-
 func walk(fs WalkableFS, path string, info FileInfo, walkFn WalkFunc, mustSkipDirs bool) error {
 	if !info.IsDir() || mustSkipDirs {
 		return walkFn(path, info, nil)
@@ -217,33 +214,6 @@ func ReadDir(fs WalkableFS, dirname string) ([]FileInfo, error) {
 	sort.Slice(entries, func(i, j int) bool { return entries[i].Name() < entries[j].Name() })
 
 	return entries, nil
-}
-
-// WalkRel is like Walk, but the paths are relative to root.
-func WalkRel(fs WalkableFS, root string, fn WalkRelFunc) error {
-	var prefix string
-
-	if strings.HasSuffix(root, string(Separator)) {
-		root = Clean(root)
-		prefix = root + string(Separator)
-	} else {
-		root = Clean(root)
-		prefix = Dir(root)
-
-		if prefix != string(Separator) {
-			prefix += string(Separator)
-		}
-	}
-
-	return Walk(fs, root, func(path string, info FileInfo, err error) error {
-		name := strings.TrimPrefix(path, prefix)
-
-		if path+string(Separator) == prefix {
-			name = ""
-		}
-
-		return fn(path, name, info, err)
-	})
 }
 
 type WalkRemoveFS interface {
