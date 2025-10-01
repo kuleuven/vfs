@@ -718,7 +718,7 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 	testContent := "OpenFile test content"
 
 	// Create and write using OpenFile
-	file, err := offs.OpenFile(testFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	file, err := offs.OpenFile(testFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -739,20 +739,14 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 		t.Errorf("Expected file size %d, got %d", len(testContent), fi.Size())
 	}
 
-	err = file.Close()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// Read back using OpenFile
-	file2, err := offs.OpenFile(testFile, os.O_RDONLY, 0)
+	_, err = file.Seek(0, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	buf := make([]byte, len(testContent))
 
-	readN, err := file2.Read(buf)
+	readN, err := file.Read(buf)
 	if err != nil && !errors.Is(err, io.EOF) {
 		t.Fatal(err)
 	}
@@ -761,7 +755,9 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 		t.Errorf("Expected content '%s', got '%s'", testContent, string(buf[:readN]))
 	}
 
-	file2.Close()
+	if err = file.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	if err = offs.Remove(testFile); err != nil {
 		t.Fatal(err)

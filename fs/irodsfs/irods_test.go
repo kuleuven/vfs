@@ -80,7 +80,7 @@ func TestIrodsFS(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	testfs := irodsfs.New(t.Context(), "cobalt", client)
+	testfs := irodsfs.New(t.Context(), "cobalt", client, irodsfs.WithOpenFileAllowedPaths([]string{"/test_openfile.txt"}))
 
 	defer func() {
 		if err := testfs.Close(); err != nil {
