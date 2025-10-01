@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001123629-c7f236aa0ebb // indirect
+	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001191220-c0b0437c2591 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/evanphx/json-patch v0.5.2 // indirect

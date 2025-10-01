@@ -308,6 +308,19 @@ func (w *wrap) Remove(path string) error {
 	return w.orig.Remove(path)
 }
 
+func (w *wrap) Rmdir(path string) error {
+	// The old file must be visible, otherwice we can't remove it
+	if _, err := w.Stat(path); err != nil {
+		return err
+	}
+
+	if !w.allowRemove {
+		return os.ErrPermission
+	}
+
+	return w.orig.Rmdir(path)
+}
+
 func GetAttr(m vfs.Attributes, key string) string {
 	if m == nil {
 		return ""

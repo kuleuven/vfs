@@ -406,6 +406,7 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 		testDir + "/nested",
 		testDir + "/nested/deep",
 		testDir + "/nested/deep2",
+		testDir + "/nested/deep3",
 	} {
 		err = fs.Mkdir(nestedDir, 0o755)
 		if err != nil {
@@ -450,8 +451,8 @@ func testDirectoryOperations(t *testing.T, fs FS) { //nolint:funlen
 		t.Error("Created file not found in directory listing")
 	}
 
-	// Clean up
-	err = RemoveAll(fs, testDir)
+	// Test remove of a directory
+	err = fs.Rmdir(testDir + "/nested/deep3")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -672,9 +673,11 @@ func testHandleFS(t *testing.T, hfs HandleFS) {
 			return err
 		}
 
+		t.Logf("Walk: %s (dir: %v)", path, info.IsDir())
+
 		handle, err := hfs.Handle(path)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("Failed to get handle for %s: %v", path, err)
 		}
 
 		t.Logf("handle of %s: %x", path, handle)
@@ -691,12 +694,12 @@ func testHandleResolveFS(t *testing.T, hrfs HandleResolveFS) {
 
 		handle, err := hrfs.Handle(path)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("Failed to get handle for %s: %v", path, err)
 		}
 
 		resolved, err := hrfs.Path(handle)
 		if err != nil {
-			t.Fatal(err)
+			t.Fatalf("Failed to get path for handle %x: %v", handle, err)
 		}
 
 		if resolved != path {

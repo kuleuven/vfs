@@ -1,5 +1,13 @@
 gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001123629-c7f236aa0ebb h1:UnZvL+/Y49nEBjVYCOhx9pE0DiyxPh42yq5OYIjXZcw=
 gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001123629-c7f236aa0ebb/go.mod h1:pfeAEiclWCi8rL6Cx7geULRrBz59Wu98vDJUyry1rmI=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001183710-355403887b56 h1:KenRy44EFgGeKrEGnyvUqFPjrp87JzXwAayWv8/LPwQ=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001183710-355403887b56/go.mod h1:FYENnY2cnxzBHLmhHex0cFDAdMx2QxGFXzrqtH0qyUE=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001183944-f69e3c02fd90 h1:++mX3inIKpV4f4etUjiEzFjFlKkdlzuIFQTTLmSqot8=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001183944-f69e3c02fd90/go.mod h1:FYENnY2cnxzBHLmhHex0cFDAdMx2QxGFXzrqtH0qyUE=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001190953-fc4d3650db9e h1:RjhvOE6OTj3D4NOCqDsnnTUs9UYO25zmx6U6uPWfGzQ=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001190953-fc4d3650db9e/go.mod h1:FYENnY2cnxzBHLmhHex0cFDAdMx2QxGFXzrqtH0qyUE=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001191220-c0b0437c2591 h1:c7+vSiynsCRENERoTjepdKJEWLORyDEM94rMxqK+B4E=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001191220-c0b0437c2591/go.mod h1:FYENnY2cnxzBHLmhHex0cFDAdMx2QxGFXzrqtH0qyUE=
 github.com/acomagu/bufpipe v1.0.4 h1:e3H4WUzM3npvo5uv95QuJM3cQspFNtFBzvJ2oNjKIDQ=
 github.com/acomagu/bufpipe v1.0.4/go.mod h1:mxdxdup/WdsKVreO5GpW4+M/1CE2sMG4jeGJ2sYmHc4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
