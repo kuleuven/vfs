@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531
-	github.com/kuleuven/iron v0.4.7
+	github.com/kuleuven/iron v0.4.8
 	github.com/pkg/sftp v1.13.9
 	github.com/pkg/xattr v0.4.12
 	github.com/sirupsen/logrus v1.9.3
@@ -14,7 +14,7 @@ require (
 )
 
 require (
-	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001191220-c0b0437c2591 // indirect
+	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251002150518-d4df235306d4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/evanphx/json-patch v0.5.2 // indirect

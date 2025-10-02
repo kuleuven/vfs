@@ -8,6 +8,8 @@ gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001190953-fc4d3650db9e h1:RjhvOE6O
 gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001190953-fc4d3650db9e/go.mod h1:FYENnY2cnxzBHLmhHex0cFDAdMx2QxGFXzrqtH0qyUE=
 gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001191220-c0b0437c2591 h1:c7+vSiynsCRENERoTjepdKJEWLORyDEM94rMxqK+B4E=
 gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251001191220-c0b0437c2591/go.mod h1:FYENnY2cnxzBHLmhHex0cFDAdMx2QxGFXzrqtH0qyUE=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251002150518-d4df235306d4 h1:xLW66zDXsFDZopi0xua6eTYjoYR1eEPYVKWofhsACfo=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251002150518-d4df235306d4/go.mod h1:6h9zJzWEc4KBt8Fd+08RiJdE49o9AgDXN5wDEf+/kYk=
 github.com/acomagu/bufpipe v1.0.4 h1:e3H4WUzM3npvo5uv95QuJM3cQspFNtFBzvJ2oNjKIDQ=
 github.com/acomagu/bufpipe v1.0.4/go.mod h1:mxdxdup/WdsKVreO5GpW4+M/1CE2sMG4jeGJ2sYmHc4=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -43,6 +45,8 @@ github.com/kuleuven/iron v0.4.5 h1:xLZgy9yTX132qKPEFE5yrpslGx6WH81e722ExaU7NbU=
 github.com/kuleuven/iron v0.4.5/go.mod h1:0B4RPvCqDz99jgouAgfMhzQrMatMtUpt1mX7QT/7Dg8=
 github.com/kuleuven/iron v0.4.7 h1:WgOtBJbPF4c/XCfcGw23+NLHtccWOnYeoMfj32wnIZw=
 github.com/kuleuven/iron v0.4.7/go.mod h1:0B4RPvCqDz99jgouAgfMhzQrMatMtUpt1mX7QT/7Dg8=
+github.com/kuleuven/iron v0.4.8 h1:n+MV1kIC9Jmh6KDcvfnBFbUAdC2Y0pVwRFOJiFNmM0A=
+github.com/kuleuven/iron v0.4.8/go.mod h1:0B4RPvCqDz99jgouAgfMhzQrMatMtUpt1mX7QT/7Dg8=
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
