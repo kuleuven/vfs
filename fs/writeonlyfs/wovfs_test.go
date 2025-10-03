@@ -13,6 +13,8 @@ func TestWriteOnlyFS(t *testing.T) {
 
 	parent := nativefs.New(ctx, t.TempDir())
 
+	defer parent.Close()
+
 	if err := parent.Mkdir("/tmp", 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -20,12 +22,10 @@ func TestWriteOnlyFS(t *testing.T) {
 	for range 2 {
 		fs := NewAt(ctx, parent, "/tmp", "test")
 
-		defer func() {
-			if err := fs.Close(); err != nil {
-				t.Error(err)
-			}
-		}()
-
 		vfs.RunTestSuiteRW(t, fs)
+
+		if err := fs.Close(); err != nil {
+			t.Error(err)
+		}
 	}
 }
