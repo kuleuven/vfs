@@ -116,7 +116,7 @@ func getExtendedAttrs(path string, list func(string) ([]string, error), get func
 	attrs := vfs.Attributes{}
 
 	for _, attr := range attrnames {
-		if strings.HasPrefix(attr, "security.") {
+		if attr == "" || strings.HasPrefix(attr, "security.") {
 			continue
 		}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/kuleuven/vfs/io/readerat"
 	"github.com/kuleuven/vfs/io/writerat"
 	"github.com/pkg/sftp"
+	"github.com/sirupsen/logrus"
 	"go.uber.org/multierr"
 	"golang.org/x/crypto/ssh"
 )
@@ -236,7 +237,7 @@ func (s *SFTP) Open(path string) (vfs.File, error) {
 	}
 
 	if stat != nil && stat.IsDir() {
-		return &SFTPDirectory{s, stat, path}, nil
+		return &SFTPDirectory{s, stat, path, nil}, nil
 	}
 
 	f, err := s.Client.OpenFile(path, os.O_RDONLY)
@@ -300,7 +301,7 @@ func (s *SFTP) UnsetExtendedAttr(path, name string) error {
 }
 
 func (s *SFTP) SetExtendedAttrs(path string, attrs vfs.Attributes) error {
-	sftpAttrs := make([]sftp.StatExtended, 0, len(attrs))
+	var sftpAttrs []sftp.StatExtended
 
 	for attr, value := range attrs {
 		sftpAttrs = append(sftpAttrs, sftp.StatExtended{
@@ -364,9 +365,10 @@ func (f *SFTPFile) Readdir(int) ([]vfs.FileInfo, error) {
 }
 
 type SFTPDirectory struct {
-	c    *SFTP
-	stat vfs.FileInfo
-	name string
+	c       *SFTP
+	stat    vfs.FileInfo
+	name    string
+	entries []vfs.FileInfo
 }
 
 func (d *SFTPDirectory) Name() string {
@@ -398,30 +400,39 @@ func (d *SFTPDirectory) Truncate(int64) error {
 }
 
 func (d *SFTPDirectory) Readdir(n int) ([]vfs.FileInfo, error) {
-	entries, err := d.c.Client.ReadDir(d.name)
-	if err != nil {
-		return nil, NormalizeError(err)
-	}
-
-	if len(entries) > n && n > 0 {
-		entries = entries[:n]
-	}
-
-	enriched := make([]vfs.FileInfo, len(entries))
-
-	for i, entry := range entries {
-		enr, ok := entry.Sys().(*sftp.FileStat)
-		if !ok {
-			return nil, ErrTypeAssertion
+	if d.entries == nil {
+		entries, err := d.c.Client.ReadDir(d.name)
+		if err != nil {
+			return nil, NormalizeError(err)
 		}
 
-		enriched[i] = &SFTPFileInfo{
-			FileInfo: entry,
-			sys:      enr,
+		d.entries = make([]vfs.FileInfo, len(entries))
+
+		for i, entry := range entries {
+			enr, ok := entry.Sys().(*sftp.FileStat)
+			if !ok {
+				return nil, ErrTypeAssertion
+			}
+
+			d.entries[i] = &SFTPFileInfo{
+				FileInfo: entry,
+				sys:      enr,
+			}
 		}
 	}
 
-	return enriched, nil
+	var err error
+
+	if n >= len(d.entries) {
+		n = len(d.entries)
+
+		err = io.EOF
+	}
+
+	result := d.entries[:n]
+	d.entries = d.entries[n:]
+
+	return result, err
 }
 
 func (d *SFTPDirectory) Stat() (vfs.FileInfo, error) {
@@ -438,6 +449,7 @@ type SFTPFileInfo struct {
 }
 
 func (s *SFTPFileInfo) NumLinks() uint64 {
+	// Bogus value...
 	return 1
 }
 
@@ -445,6 +457,12 @@ func (s *SFTPFileInfo) Extended() (vfs.Attributes, error) {
 	attr := vfs.Attributes{}
 
 	for _, e := range s.sys.Extended {
+		if e.ExtType == "" {
+			logrus.Warn("empty extended attribute type")
+
+			continue
+		}
+
 		attr.Set(e.ExtType, []byte(e.ExtData))
 	}
 
