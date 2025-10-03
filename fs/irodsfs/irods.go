@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -189,7 +190,7 @@ func (fs *IRODS) OpenFile(path string, flag int, perm os.FileMode) (vfs.File, er
 	}
 
 	return &FileBufferedAt{
-		File: handle,
+		file: handle,
 		readerAt: &buffered.BufferedReaderAt{
 			ReaderAt:  handle,
 			ChunkSize: fs.ChunkSize,
@@ -204,17 +205,64 @@ func (fs *IRODS) OpenFile(path string, flag int, perm os.FileMode) (vfs.File, er
 }
 
 type FileBufferedAt struct {
-	vfs.File
+	file     vfs.File
 	readerAt *buffered.BufferedReaderAt
 	writerAt *buffered.BufferedWriterAt
+	offset   int64
 	sync.Mutex
+}
+
+func (f *FileBufferedAt) Name() string {
+	return f.file.Name()
+}
+
+func (f *FileBufferedAt) Readdir(int) ([]vfs.FileInfo, error) {
+	return nil, syscall.ENOTDIR
+}
+
+func (f *FileBufferedAt) Stat() (vfs.FileInfo, error) {
+	if err := f.writerAt.Flush(0, -1); err != nil {
+		return nil, err
+	}
+
+	return f.file.Stat()
+}
+
+func (f *FileBufferedAt) Read(p []byte) (int, error) {
+	f.Lock()
+	defer f.Unlock()
+
+	f.writerAt.Flush(f.offset, len(p))
+
+	n, err := f.readerAt.ReadAt(p, f.offset)
+
+	f.offset += int64(n)
+
+	return n, err
 }
 
 func (f *FileBufferedAt) ReadAt(p []byte, off int64) (int, error) {
 	f.Lock()
 	defer f.Unlock()
 
+	f.writerAt.Flush(off, len(p))
+
 	return f.readerAt.ReadAt(p, off)
+}
+
+func (f *FileBufferedAt) Write(p []byte) (int, error) {
+	f.Lock()
+	defer f.Unlock()
+
+	n, err := f.writerAt.WriteAt(p, f.offset)
+
+	if n > 0 {
+		f.readerAt.Invalidate(f.offset, n)
+	}
+
+	f.offset += int64(n)
+
+	return n, err
 }
 
 func (f *FileBufferedAt) WriteAt(p []byte, off int64) (int, error) {
@@ -230,9 +278,47 @@ func (f *FileBufferedAt) WriteAt(p []byte, off int64) (int, error) {
 	return n, err
 }
 
+func (f *FileBufferedAt) Seek(offset int64, whence int) (int64, error) {
+	f.Lock()
+	defer f.Unlock()
+
+	if whence == io.SeekCurrent {
+		offset += f.offset
+	}
+
+	if whence == io.SeekEnd {
+		if err := f.writerAt.Flush(0, -1); err != nil {
+			return 0, err
+		}
+
+		fi, err := f.Stat()
+		if err != nil {
+			return 0, err
+		}
+
+		offset += fi.Size()
+	}
+
+	f.offset = offset
+
+	return f.offset, nil
+}
+
+func (f *FileBufferedAt) Truncate(size int64) error {
+	f.Lock()
+	defer f.Unlock()
+
+	if err := f.writerAt.Flush(size, -1); err != nil {
+		return err
+	}
+
+	f.readerAt.Invalidate(size, -1)
+
+	return f.file.Truncate(size)
+}
+
 func (f *FileBufferedAt) Close() error {
 	f.Lock()
-
 	defer f.Unlock()
 
 	return f.writerAt.Close()

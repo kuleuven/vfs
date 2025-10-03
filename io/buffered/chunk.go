@@ -24,6 +24,14 @@ func newChunk(offset int64, size int) *Chunk {
 	}
 }
 
+func (c *Chunk) Offset() int64 {
+	return c.offset
+}
+
+func (c *Chunk) Size() int {
+	return len(c.buf)
+}
+
 var ErrInvalidOffset = errors.New("invalid offset")
 
 var ErrNoDataAtOffset = errors.New("chunk has no data slice at this offset")

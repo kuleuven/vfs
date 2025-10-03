@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -710,9 +711,9 @@ func testHandleResolveFS(t *testing.T, hrfs HandleResolveFS) {
 	})
 }
 
-func testOpenFileFS(t *testing.T, offs OpenFileFS) {
+func testOpenFileFS(t *testing.T, offs OpenFileFS) { //nolint:funlen
 	testFile := "/test_openfile.txt"
-	testContent := "OpenFile test content"
+	testContent := strings.Repeat("OpenFile test content", 100)
 
 	// Create and write using OpenFile
 	file, err := offs.OpenFile(testFile, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0o644)
@@ -750,6 +751,27 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) {
 
 	if string(buf[:readN]) != testContent {
 		t.Errorf("Expected content '%s', got '%s'", testContent, string(buf[:readN]))
+	}
+
+	_, err = file.WriteAt([]byte("TestOverwrite"), 100)
+	if err != nil {
+		t.Error(err)
+	}
+
+	_, err = file.WriteAt([]byte("TestAppend"), int64(len(testContent)))
+	if err != nil {
+		t.Error(err)
+	}
+
+	buf2 := make([]byte, 8)
+
+	_, err = file.ReadAt(buf2, 100-4)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if string(buf2[4:]) != "Test" {
+		t.Errorf("Expected content '%s', got '%s'", "Test", string(buf2[:4]))
 	}
 
 	if err = file.Close(); err != nil {

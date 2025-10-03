@@ -26,7 +26,7 @@ func (c *BackgroundReader) ReadAt(buf []byte, offset int64) (int, error) {
 			return 0, c.readErr
 		}
 
-		n, err = c.chunk.ReadAt(buf, offset)
+		n, err = returnEOF(c.chunk.ReadAt(buf, offset))
 	} else {
 		n, err = c.ReaderAt.ReadAt(buf, offset)
 	}

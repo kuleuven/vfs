@@ -87,7 +87,11 @@ func (b *BufferedReaderAt) Invalidate(off int64, length int) {
 
 	// Read from the current chunks if possible
 	for _, chunk := range b.chunks {
-		if !chunk.Overlaps(off, length) {
+		if length > 0 && !chunk.Overlaps(off, length) {
+			kept = append(kept, chunk)
+		}
+
+		if length < 0 && chunk.Offset()+int64(chunk.Size()) <= off {
 			kept = append(kept, chunk)
 		}
 	}
@@ -203,6 +207,31 @@ func (b *BufferedWriterAt) freeChunk(offset int64) (*Chunk, error) {
 	largestChunk.Reset(offset)
 
 	return largestChunk, nil
+}
+
+func (b *BufferedWriterAt) Flush(off int64, length int) error {
+	b.Lock()
+	defer b.Unlock()
+
+	errs := []error{}
+
+	for _, chunk := range b.chunks {
+		if length > 0 && !chunk.Overlaps(off, length) {
+			continue
+		}
+
+		if length < 0 && chunk.Offset()+int64(chunk.Size()) <= off {
+			continue
+		}
+
+		_, err := chunk.WriteTo(b.WriterAt)
+
+		errs = append(errs, err)
+
+		chunk.Reset(chunk.Offset())
+	}
+
+	return MultipleError(errs...)
 }
 
 // Close flushes all chunks and closes the underlying writer.
