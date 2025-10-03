@@ -771,7 +771,7 @@ func testOpenFileFS(t *testing.T, offs OpenFileFS) { //nolint:funlen
 	}
 
 	if string(buf2[4:]) != "Test" {
-		t.Errorf("Expected content '%s', got '%s'", "Test", string(buf2[:4]))
+		t.Errorf("Expected content 'Test', got '%s'", string(buf2[:4]))
 	}
 
 	if err = file.Close(); err != nil {
