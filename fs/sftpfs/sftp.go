@@ -423,7 +423,9 @@ func (d *SFTPDirectory) Readdir(n int) ([]vfs.FileInfo, error) {
 
 	var err error
 
-	if n >= len(d.entries) {
+	if n < 0 {
+		n = len(d.entries)
+	} else if n >= len(d.entries) {
 		n = len(d.entries)
 
 		err = io.EOF
