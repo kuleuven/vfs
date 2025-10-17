@@ -701,7 +701,15 @@ func (fs *IRODS) List(path string) (vfs.ListerAt, error) {
 		return nil
 	})
 
-	return vfs.FileInfoListerAt(entries), err
+	return vfs.FileInfoListerAt(entries), notExistError(err)
+}
+
+func notExistError(err error) error {
+	if errors.Is(err, api.ErrNoRowFound) {
+		return os.ErrNotExist
+	}
+
+	return err
 }
 
 func (fs *IRODS) Walk(path string, fn vfs.WalkFunc) error {
@@ -713,7 +721,7 @@ func (fs *IRODS) Walk(path string, fn vfs.WalkFunc) error {
 		opts = append(opts, api.FetchMetadata)
 	}
 
-	return fs.Client.Walk(fs.Context, path, func(path string, record api.Record, err error) error {
+	return notExistError(fs.Client.Walk(fs.Context, path, func(path string, record api.Record, err error) error {
 		if err != nil {
 			return fn(path, nil, err)
 		}
@@ -727,7 +735,7 @@ func (fs *IRODS) Walk(path string, fn vfs.WalkFunc) error {
 		obj, _ := record.Sys().(*api.DataObject)
 
 		return fn(path, fs.makeDataObjectFileInfo(obj, record.Access(), record.Metadata()), nil)
-	}, opts...)
+	}, opts...))
 }
 
 var ErrUnexpectedEmptyXattrs = errors.New("unexpected empty xattrs")

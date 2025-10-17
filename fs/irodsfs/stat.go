@@ -1,13 +1,11 @@
 package irodsfs
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strconv"
 	"strings"
-	"syscall"
 
 	"github.com/kuleuven/iron/api"
 	"github.com/kuleuven/iron/msg"
@@ -17,10 +15,8 @@ import (
 func (fs *IRODS) stat(path string) (vfs.FileInfo, error) {
 	// Is the path a collection?
 	record, err := fs.Client.GetRecord(fs.Context, path, api.FetchAccess, api.FetchMetadata)
-	if errors.Is(err, api.ErrNoRowFound) {
-		return nil, syscall.ENOENT
-	} else if err != nil {
-		return nil, err
+	if err != nil {
+		return nil, notExistError(err)
 	}
 
 	return fs.makeFileInfo(record)
