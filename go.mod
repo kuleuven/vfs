@@ -3,11 +3,11 @@ module github.com/kuleuven/vfs
 go 1.25.1
 
 require (
-	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251003071859-9d1201c009ef
-	gitea.icts.kuleuven.be/coz/sftp v1.6.5
+	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251021084739-b410047f4ad9
+	gitea.icts.kuleuven.be/coz/sftp v1.6.6
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531
-	github.com/kuleuven/iron v0.4.11
-	github.com/pkg/sftp v1.13.9
+	github.com/kuleuven/iron v0.4.16
+	github.com/pkg/sftp v1.13.10
 	github.com/pkg/xattr v0.4.12
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/afero v1.15.0
@@ -57,5 +57,5 @@ require (
 	modernc.org/libc v1.66.10 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.39.0 // indirect
+	modernc.org/sqlite v1.39.1 // indirect
 )
