@@ -41,7 +41,7 @@ func TestJoin(t *testing.T) {
 		{"with empty strings", []string{"home", "", "user"}, "home/user"},
 		{"single element", []string{"file.txt"}, "file.txt"},
 		{"multiple empty strings", []string{"home", "", "", "user"}, "home/user"},
-		{"empty string at start", []string{"", "home", "user"}, "/home/user"},
+		{"empty string at start", []string{"", "home", "user"}, "home/user"},
 		{"all non-empty", []string{"a", "b", "c"}, "a/b/c"},
 	}
 

@@ -32,6 +32,10 @@ func Join(paths ...string) string {
 		return string(Separator) + strings.Join(paths[1:], string(Separator))
 	}
 
+	if paths[0] == "" {
+		return strings.Join(paths[1:], string(Separator))
+	}
+
 	return strings.Join(paths, string(Separator))
 }
 
