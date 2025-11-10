@@ -35,6 +35,7 @@ func TestJoin(t *testing.T) {
 		paths    []string
 		expected string
 	}{
+		{"root and empty", []string{"/", ""}, "/"},
 		{"simple join", []string{"home", "user", "file.txt"}, "home/user/file.txt"},
 		{"root path", []string{"/", "home", "user"}, "/home/user"},
 		{"with empty strings", []string{"home", "", "user"}, "home/user"},

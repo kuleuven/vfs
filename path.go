@@ -16,10 +16,6 @@ func IsAbs(path string) bool {
 // Join joins any number of path elements into a single path,
 // separating them with slashes.
 func Join(paths ...string) string {
-	if paths[0] == "/" {
-		paths[0] = ""
-	}
-
 	for i := 1; i < len(paths); i++ {
 		if IsAbs(paths[i]) {
 			logrus.Errorf("Join(%q) called with invalid input", paths)
@@ -30,6 +26,10 @@ func Join(paths ...string) string {
 			paths = append(paths[:i], paths[i+1:]...)
 			i--
 		}
+	}
+
+	if paths[0] == "/" {
+		return string(Separator) + strings.Join(paths[1:], string(Separator))
 	}
 
 	return strings.Join(paths, string(Separator))
