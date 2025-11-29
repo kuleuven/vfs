@@ -3,7 +3,7 @@ module github.com/kuleuven/vfs
 go 1.25.1
 
 require (
-	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251124170548-628e1e01a6be
+	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20251128083714-e003006ef5f5
 	gitea.icts.kuleuven.be/coz/sftp v1.6.9
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531
 	github.com/kuleuven/iron v0.4.35
