@@ -9,7 +9,7 @@ require (
 	github.com/kuleuven/iron v0.4.50
 	github.com/pkg/sftp v1.13.10
 	github.com/pkg/xattr v0.4.12
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/afero v1.15.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.47.0
