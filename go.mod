@@ -3,7 +3,7 @@ module github.com/kuleuven/vfs
 go 1.25.5
 
 require (
-	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260108124646-e15064779365
+	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260121140354-4af6da711a5f
 	gitea.icts.kuleuven.be/coz/sftp v1.6.9
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531
 	github.com/kuleuven/iron v0.4.51
@@ -36,7 +36,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mmcloughlin/md4 v0.1.2 // indirect
-	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pires/go-proxyproto v0.8.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
@@ -54,8 +54,8 @@ require (
 	golang.org/x/term v0.39.0 // indirect
 	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	modernc.org/libc v1.66.10 // indirect
+	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.42.2 // indirect
+	modernc.org/sqlite v1.44.3 // indirect
 )
