@@ -22,6 +22,9 @@ var (
 	// String indicating which local storage can be used as persistent storage for the inode handle database.
 	PersistentStorage = ContextKey("persistent-storage")
 
+	// Boolean indicating whether or not the inode handle database should be persisted.
+	DisablePersistentHandleDB = ContextKey("disable-persistent-handle-db")
+
 	// Boolean indicating whether or not server inodes should be used when exposing a native posix file system.
 	UseServerInodes = ContextKey("use-serverino")
 
@@ -100,6 +103,11 @@ type FileInfo interface {
 	NumLinks() uint64
 	Extended() (Attributes, error)
 	Permissions() (*Permissions, error) // Returns an indicative permission set to indicate which permissions the client has
+}
+
+type HandleFileInfo interface {
+	FileInfo
+	Handle() ([]byte, error)
 }
 
 type Attributes map[string][]byte

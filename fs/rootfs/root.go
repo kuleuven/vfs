@@ -120,8 +120,13 @@ func (r *Root) prepareMount(path string, fs vfs.FS, index byte) *Mount {
 		return mount
 	}
 
-	storage, ok := r.Context.Value(vfs.PersistentStorage).(string)
-	if !ok || storage == "" {
+	if vfs.Bool(r.Context, vfs.DisablePersistentHandleDB) {
+		return mount
+	}
+
+	storage := vfs.String(r.Context, vfs.PersistentStorage)
+
+	if storage == "" {
 		r.Logger().Warnf("Cannot load HandleDB for %s, no persistent storage configured", mount.Mountpoint)
 
 		return mount
