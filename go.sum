@@ -1,5 +1,5 @@
-gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260121140354-4af6da711a5f h1:3VptAistVeBfXkxa3B3b6tU9w5Z7y+YZDjlqhlKwLbU=
-gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260121140354-4af6da711a5f/go.mod h1:D/kB3i8vRGFbxop3eo13PToCau1ji9biDD55oF5U9A0=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260128100105-dee227a94c9d h1:UhMsD9P3aTDRUwxI5PtbjuVVWQyRlEqAUkmb8NW1eaU=
+gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260128100105-dee227a94c9d/go.mod h1:bQs4mh6JI3bPF1U69CxdGPs/KdWDAjTRDeak+0Nrhm8=
 gitea.icts.kuleuven.be/coz/sftp v1.6.9 h1:/hg01H3BnTeQZojZoXChKojNi3nCojPfBGBjmmtont4=
 gitea.icts.kuleuven.be/coz/sftp v1.6.9/go.mod h1:tyQ4gF3lilovyw9kPa2GzJQ1UoWSiwY/+dxl/xNhlwI=
 github.com/Azure/go-ntlmssp v0.1.0 h1:DjFo6YtWzNqNvQdrwEyr/e4nhU3vRiwenz5QX7sFz+A=
