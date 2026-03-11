@@ -1,6 +1,7 @@
 package emptyfs
 
 import (
+	"crypto"
 	"io"
 	"os"
 	"syscall"
@@ -74,6 +75,10 @@ func (Empty) Path(handle []byte) (string, error) {
 	}
 
 	return "/", nil
+}
+
+func (Empty) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	return nil, os.ErrNotExist
 }
 
 type EmptyDirStat struct{}

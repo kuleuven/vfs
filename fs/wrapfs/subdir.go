@@ -1,6 +1,7 @@
 package wrapfs
 
 import (
+	"crypto"
 	"os"
 	"strings"
 	"syscall"
@@ -252,4 +253,13 @@ func (s *subdirAdvancedLink) Link(oldname, newname string) error {
 
 func (s *subdirAdvancedLink) Symlink(oldname, newname string) error {
 	return s.Parent.Symlink(s.buildPath(oldname), s.buildPath(newname))
+}
+
+func (s *subdirAdvanced) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	checksumFS, ok := s.Parent.(vfs.ChecksumFS)
+	if ok {
+		return checksumFS.Checksum(s.buildPath(path), algorithm)
+	}
+
+	return vfs.Checksum(s.Parent, s.buildPath(path), algorithm)
 }

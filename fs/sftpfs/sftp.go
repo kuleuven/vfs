@@ -2,6 +2,7 @@ package sftpfs
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/hex"
 	"errors"
 	"io"
@@ -332,6 +333,10 @@ func (s *SFTP) Handle(path string) ([]byte, error) {
 
 func (s *SFTP) Path(handle []byte) (string, error) {
 	return s.RealPath(InodePrefix + hex.EncodeToString(handle))
+}
+
+func (s *SFTP) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	return vfs.Checksum(s, path, algorithm)
 }
 
 func (s *SFTP) Close() error {

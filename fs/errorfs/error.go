@@ -1,6 +1,7 @@
 package errorfs
 
 import (
+	"crypto"
 	"os"
 
 	"github.com/kuleuven/vfs"
@@ -71,4 +72,8 @@ func (efs *ErrorFS) Mount(path string, fs vfs.FS, index byte) error {
 
 func (efs *ErrorFS) Walk(path string, walkFn vfs.WalkFunc) error {
 	return efs.Error
+}
+
+func (efs *ErrorFS) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	return nil, efs.Error
 }

@@ -2,6 +2,7 @@ package rootfs
 
 import (
 	"context"
+	"crypto"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -894,4 +895,20 @@ func (r *Root) RemoveAll(path string) error {
 	r.Logger().Debugf("RemoveAll(%q)", path)
 
 	return vfs.RemoveAll(r, path)
+}
+
+func (r *Root) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	r.Logger().Debugf("Checksum(%q, %v)", path, algorithm)
+
+	fs, path, err := r.FollowSymlinks(path)
+	if err != nil {
+		return nil, err
+	}
+
+	checksumFS, ok := fs.FS.(vfs.ChecksumFS)
+	if ok {
+		return checksumFS.Checksum(path, algorithm)
+	}
+
+	return vfs.Checksum(fs.FS, path, algorithm)
 }

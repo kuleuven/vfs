@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"context"
+	"crypto"
 	"io"
 	"os"
 	"time"
@@ -166,6 +167,11 @@ type ListerAt interface {
 	Close() error
 }
 
+type ChecksumFS interface {
+	FS
+	Checksum(path string, algorithm crypto.Hash) ([]byte, error)
+}
+
 type HandleFS interface {
 	FS
 	Handle(path string) ([]byte, error)
@@ -217,6 +223,7 @@ type AdvancedFS interface {
 	OpenFileFS
 	HandleResolveFS
 	SetExtendedAttrsFS
+	ChecksumFS
 }
 
 type AdvancedLinkFS interface {

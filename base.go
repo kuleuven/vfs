@@ -1,6 +1,7 @@
 package vfs
 
 import (
+	"crypto"
 	"os"
 	"time"
 )
@@ -128,4 +129,8 @@ func (n NotImplementedRootFS) RealPath(path string) (string, error) {
 
 func (n NotImplementedRootFS) Mount(path string, fs FS, index byte) error {
 	return ErrNotImplemented
+}
+
+func (n NotImplementedAdvancedFS) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	return nil, ErrNotImplemented
 }

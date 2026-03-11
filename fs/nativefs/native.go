@@ -2,6 +2,7 @@ package nativefs
 
 import (
 	"context"
+	"crypto"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -220,6 +221,10 @@ func (m *NativeFS) Rmdir(path string) error {
 
 func (m *NativeFS) FileRead(path string) (vfs.ReaderAt, error) {
 	return m.openFile(m.BuildPath(path), os.O_RDONLY, 0o640)
+}
+
+func (m *NativeFS) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
+	return vfs.Checksum(m, path, algorithm)
 }
 
 func (m *NativeFS) FileWrite(path string, flag int) (vfs.WriterAt, error) {

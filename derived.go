@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"bytes"
+	"crypto"
 	"errors"
 	"io"
 	"os"
@@ -74,6 +75,27 @@ func extendedAttrsDifference(oldAttrs, newAttrs Attributes) (Attributes, Attribu
 	}
 
 	return add, remove
+}
+
+type ReadFS interface {
+	FileRead(path string) (ReaderAt, error)
+}
+
+func Checksum(fs ReadFS, path string, algorithm crypto.Hash) ([]byte, error) {
+	f, err := fs.FileRead(path)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+
+	hasher := algorithm.New()
+
+	if _, err := io.Copy(hasher, readerat.Reader(f, 0, -1)); err != nil {
+		return nil, err
+	}
+
+	return hasher.Sum(nil), nil
 }
 
 type MkdirFS interface {
