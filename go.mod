@@ -6,7 +6,7 @@ require (
 	gitea.icts.kuleuven.be/coz/cobalt v0.0.0-20260330093954-4ef338747186
 	gitea.icts.kuleuven.be/coz/sftp v1.8.0
 	github.com/joshlf/go-acl v0.0.0-20200411065538-eae00ae38531
-	github.com/kuleuven/iron v0.4.75
+	github.com/kuleuven/iron v0.4.80
 	github.com/pkg/sftp v1.13.10
 	github.com/pkg/xattr v0.4.12
 	github.com/sirupsen/logrus v1.9.4
