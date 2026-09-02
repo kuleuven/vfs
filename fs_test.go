@@ -514,6 +514,7 @@ func TestPermissions(t *testing.T) {
 func TestContextKeyType(t *testing.T) {
 	// Verify ContextKey is a distinct type
 	var key ContextKey = "test"
+
 	if key != ContextKey("test") {
 		t.Error("ContextKey type assertion failed")
 	}

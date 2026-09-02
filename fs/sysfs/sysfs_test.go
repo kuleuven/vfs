@@ -41,6 +41,7 @@ func TestFSFileOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Stat failed: %v", err)
 	}
+
 	if info.Name() != configName || info.Size() != 5 {
 		t.Fatalf("unexpected file info: name=%q size=%d", info.Name(), info.Size())
 	}
@@ -49,6 +50,7 @@ func TestFSFileOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open failed: %v", err)
 	}
+
 	defer func() {
 		if err := file.Close(); err != nil {
 			t.Errorf("Close failed: %v", err)
@@ -59,6 +61,7 @@ func TestFSFileOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Read failed: %v", err)
 	}
+
 	if string(data) != "hello" {
 		t.Fatalf("unexpected contents: %q", data)
 	}
@@ -67,10 +70,12 @@ func TestFSFileOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("List failed: %v", err)
 	}
+
 	infos := make([]vfs.FileInfo, 1)
 	if n, err := list.ListAt(infos, 0); n != 1 || err != nil {
 		t.Fatalf("ListAt returned (%d, %v)", n, err)
 	}
+
 	if infos[0].Name() != configName {
 		t.Fatalf("unexpected listed name: %q", infos[0].Name())
 	}
@@ -79,10 +84,12 @@ func TestFSFileOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Handle failed: %v", err)
 	}
+
 	resolved, err := fs.Path(handle)
 	if err != nil {
 		t.Fatalf("Path failed: %v", err)
 	}
+
 	if resolved != "/etc/config" {
 		t.Fatalf("unexpected resolved path: %q", resolved)
 	}

@@ -41,13 +41,9 @@ func (c *BackgroundReader) ReadAt(buf []byte, offset int64) (int, error) {
 		c.chunk.Reset(offset + int64(len(buf)))
 	}
 
-	c.Add(1)
-
-	go func() {
-		defer c.Done()
-
+	c.Go(func() {
 		_, c.readErr = c.chunk.FromReader(c.ReaderAt)
-	}()
+	})
 
 	return n, nil
 }
@@ -89,13 +85,9 @@ func (c *BackgroundWriter) WriteAt(buf []byte, offset int64) (int, error) {
 		return n, err
 	}
 
-	c.Add(1)
-
-	go func() {
-		defer c.Done()
-
+	c.Go(func() {
 		_, c.writeErr = c.chunk.WriteTo(c.WriterAt)
-	}()
+	})
 
 	if n < len(buf) {
 		return n, io.ErrShortWrite

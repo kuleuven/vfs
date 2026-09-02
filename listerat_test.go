@@ -22,7 +22,7 @@ func (m mockFileInfo) Size() int64        { return m.size }
 func (m mockFileInfo) Mode() os.FileMode  { return m.mode }
 func (m mockFileInfo) ModTime() time.Time { return m.modTime }
 func (m mockFileInfo) IsDir() bool        { return m.isDir }
-func (m mockFileInfo) Sys() interface{}   { return nil }
+func (m mockFileInfo) Sys() any           { return nil }
 func (m mockFileInfo) Uid() uint32        { return 1000 } //nolint:staticcheck
 func (m mockFileInfo) Gid() uint32        { return 1000 } //nolint:staticcheck
 func (m mockFileInfo) NumLinks() uint64   { return 1 }
@@ -241,6 +241,7 @@ func TestListAll(t *testing.T) { //nolint:gocognit,funlen
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ListAll() error = %v, wantErr %v", err, tt.wantErr)
+
 				return
 			}
 
@@ -358,6 +359,7 @@ func TestIterate_WithError(t *testing.T) {
 	lister := &errorListerAt{errAt: 50}
 
 	var count int
+
 	for range Iterate(lister, 10) {
 		count++
 	}

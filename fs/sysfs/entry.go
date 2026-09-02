@@ -136,7 +136,7 @@ func (fi entryInfo) IsDir() bool {
 	return false
 }
 
-func (fi entryInfo) Sys() interface{} {
+func (fi entryInfo) Sys() any {
 	return nil
 }
 

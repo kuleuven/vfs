@@ -51,6 +51,7 @@ func (m *mockWriterAt) WriteAt(p []byte, off int64) (int, error) {
 		// Extend data if needed
 		newData := make([]byte, off+int64(len(p)))
 		copy(newData, m.data)
+
 		m.data = newData
 	}
 

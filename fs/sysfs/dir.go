@@ -199,7 +199,7 @@ func (fi directoryInfo) IsDir() bool {
 	return true
 }
 
-func (fi directoryInfo) Sys() interface{} {
+func (fi directoryInfo) Sys() any {
 	return nil
 }
 

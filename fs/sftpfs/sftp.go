@@ -476,7 +476,7 @@ func (s *SFTPFileInfo) Extended() (vfs.Attributes, error) {
 	return attr, nil
 }
 
-func (s *SFTPFileInfo) Sys() interface{} {
+func (s *SFTPFileInfo) Sys() any {
 	return s.sys
 }
 

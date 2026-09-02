@@ -70,8 +70,8 @@ func Delinearize(values vfs.Attributes, defaultZone string) ([]api.Metadata, []a
 	}
 
 	for key, value := range values {
-		if strings.HasPrefix(key, metaPrefixACL) {
-			username, zone := parseUser(strings.TrimPrefix(key, metaPrefixACL), defaultZone)
+		if after, ok := strings.CutPrefix(key, metaPrefixACL); ok {
+			username, zone := parseUser(after, defaultZone)
 
 			acl = append(acl, api.Access{
 				User: api.User{

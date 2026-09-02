@@ -103,7 +103,7 @@ func (fi EmptyDirStat) IsDir() bool {
 	return true
 }
 
-func (fi EmptyDirStat) Sys() interface{} {
+func (fi EmptyDirStat) Sys() any {
 	return nil
 }
 

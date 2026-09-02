@@ -62,7 +62,7 @@ func Clean(path string) string {
 		neg      int
 	)
 
-	for _, element := range strings.Split(path, string(Separator)) {
+	for element := range strings.SplitSeq(path, string(Separator)) {
 		if element == "" || element == "." {
 			continue
 		}
@@ -143,6 +143,7 @@ func Base(path string) string {
 	if i >= 0 {
 		path = path[i+1:]
 	}
+
 	// If empty now, it had only slashes.
 	if path == "" {
 		return "."

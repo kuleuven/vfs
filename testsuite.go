@@ -238,6 +238,7 @@ func testWalk(t *testing.T, fs FS) {
 	err := Walk(fs, "/", func(path string, info FileInfo, err error) error {
 		if err != nil {
 			t.Logf("Walk error at %s: %v", path, err)
+
 			return err
 		}
 
@@ -509,6 +510,7 @@ func testTimeOperations(t *testing.T, fs FS) {
 
 	if err := fs.Chtimes(testFile, newTime, newTime); err != nil {
 		t.Errorf("Chtimes not supported or failed: %v", err)
+
 		return
 	}
 

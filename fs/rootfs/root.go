@@ -588,6 +588,7 @@ func (r *Root) List(path string) (vfs.ListerAt, error) {
 	fs, path, err := r.FollowSymlinks(path)
 	if err != nil {
 		logrus.Warnf("List(%q) error: %v", path, err)
+
 		return nil, err
 	}
 

@@ -34,6 +34,7 @@ func (m *mockWriterAt) WriteAt(p []byte, off int64) (int, error) {
 		newSize := off + int64(len(p))
 		newData := make([]byte, newSize)
 		copy(newData, m.data)
+
 		m.data = newData
 	}
 
@@ -78,6 +79,7 @@ func (m *mockWriteSeeker) Write(p []byte) (int, error) {
 		newSize := m.offset + int64(len(p))
 		newData := make([]byte, newSize)
 		copy(newData, m.data)
+
 		m.data = newData
 	}
 
@@ -456,11 +458,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 		errorch := make(chan error, numGoroutines)
 
 		for range numGoroutines {
-			wg.Add(1)
-
-			go func() {
-				defer wg.Done()
-
+			wg.Go(func() {
 				for range numWrites {
 					data := []byte("X")
 
@@ -470,7 +468,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:gocognit,funlen
 						return
 					}
 				}
-			}()
+			})
 		}
 
 		wg.Wait()

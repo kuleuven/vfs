@@ -19,7 +19,7 @@ type fileInfo struct {
 	permissionSet *vfs.Permissions
 	owner         int
 	group         int
-	sys           interface{}
+	sys           any
 }
 
 // Name provides the base name of the file.
@@ -53,7 +53,7 @@ func (fi *fileInfo) SetMode(mode os.FileMode) {
 }
 
 // Sys provides the underlying data source (can return nil)
-func (fi *fileInfo) Sys() interface{} {
+func (fi *fileInfo) Sys() any {
 	return fi.sys
 }
 

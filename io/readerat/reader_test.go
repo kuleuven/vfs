@@ -364,11 +364,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:funlen,gocognit
 		errorch := make(chan error, numGoroutines)
 
 		for range numGoroutines {
-			wg.Add(1)
-
-			go func() {
-				defer wg.Done()
-
+			wg.Go(func() {
 				for range numReads {
 					buf := make([]byte, 5)
 
@@ -378,7 +374,7 @@ func TestConcurrentAccess(t *testing.T) { //nolint:funlen,gocognit
 						return
 					}
 				}
-			}()
+			})
 		}
 
 		wg.Wait()
