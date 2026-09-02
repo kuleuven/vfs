@@ -100,6 +100,10 @@ func (e FS) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
 		return nil, os.ErrNotExist
 	}
 
+	if !algorithm.Available() {
+		return nil, os.ErrInvalid
+	}
+
 	h := algorithm.New()
 
 	if _, err := io.Copy(h, entry.File()); err != nil {
