@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/kuleuven/vfs"
 )
@@ -119,5 +120,48 @@ func TestFSChecksum(t *testing.T) {
 
 	if _, err := fs.Checksum("/config", crypto.Hash(0)); !errors.Is(err, os.ErrInvalid) {
 		t.Fatalf("unsupported checksum error = %v, want os.ErrInvalid", err)
+	}
+}
+
+func TestFSRootFSOperations(t *testing.T) {
+	fs := New(Directory{
+		Name: "/",
+		Entries: []Entry{{
+			Name:    configName,
+			Payload: []byte("hello"),
+		}},
+	})
+
+	reader, err := fs.FileRead("/config")
+	if err != nil {
+		t.Fatalf("FileRead failed: %v", err)
+	}
+	defer reader.Close()
+
+	file, err := fs.OpenFile("/config", os.O_RDONLY, 0)
+	if err != nil {
+		t.Fatalf("OpenFile read-only failed: %v", err)
+	}
+	defer file.Close()
+
+	if _, err := fs.OpenFile("/config", os.O_WRONLY, 0); !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("OpenFile write error = %v, want os.ErrPermission", err)
+	}
+
+	path, err := fs.RealPath("/config")
+	if err != nil || path != "/config" {
+		t.Fatalf("RealPath returned (%q, %v), want (/config, nil)", path, err)
+	}
+
+	if _, err := fs.FileWrite("/config", os.O_WRONLY); !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("FileWrite error = %v, want os.ErrPermission", err)
+	}
+
+	if err := fs.Chtimes("/config", time.Time{}, time.Time{}); !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("Chtimes error = %v, want os.ErrPermission", err)
+	}
+
+	if err := fs.Symlink("/config", "/link"); !errors.Is(err, os.ErrPermission) {
+		t.Fatalf("Symlink error = %v, want os.ErrPermission", err)
 	}
 }

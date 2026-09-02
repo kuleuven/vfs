@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/kuleuven/vfs"
 )
@@ -16,7 +17,6 @@ func New(top Directory) *FS {
 }
 
 type FS struct {
-	vfs.NotImplementedRootFS
 	top Directory
 }
 
@@ -81,6 +81,27 @@ func (e FS) Open(path string) (vfs.File, error) {
 	return nil, os.ErrNotExist
 }
 
+func (e FS) OpenFile(path string, flag int, _ os.FileMode) (vfs.File, error) {
+	if flag&os.O_WRONLY != 0 || flag&os.O_RDWR != 0 {
+		return nil, os.ErrPermission
+	}
+
+	return e.Open(path)
+}
+
+func (e FS) FileRead(path string) (vfs.ReaderAt, error) {
+	file, err := e.Open(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return file, nil
+}
+
+func (FS) FileWrite(path string, flag int) (vfs.WriterAt, error) {
+	return nil, os.ErrPermission
+}
+
 func (e FS) Handle(path string) ([]byte, error) {
 	return []byte(path), nil
 }
@@ -111,4 +132,76 @@ func (e FS) Checksum(path string, algorithm crypto.Hash) ([]byte, error) {
 	}
 
 	return h.Sum(nil), nil
+}
+
+func (e FS) Chmod(path string, mode os.FileMode) error {
+	return os.ErrPermission
+}
+
+func (e FS) Chown(path string, uid, gid int) error {
+	return os.ErrPermission
+}
+
+func (FS) Chtimes(path string, atime, mtime time.Time) error {
+	return os.ErrPermission
+}
+
+func (FS) Truncate(path string, size int64) error {
+	return os.ErrPermission
+}
+
+func (FS) SetExtendedAttr(path, name string, value []byte) error {
+	return os.ErrPermission
+}
+
+func (FS) UnsetExtendedAttr(path, name string) error {
+	return os.ErrPermission
+}
+
+func (FS) Rename(oldpath, newpath string) error {
+	return os.ErrPermission
+}
+
+func (FS) Rmdir(path string) error {
+	return os.ErrPermission
+}
+
+func (FS) Remove(path string) error {
+	return os.ErrPermission
+}
+
+func (FS) Mkdir(path string, perm os.FileMode) error {
+	return os.ErrPermission
+}
+
+func (FS) Close() error {
+	return nil
+}
+
+func (FS) Link(oldname, newname string) error {
+	return os.ErrPermission
+}
+
+func (FS) Symlink(target, link string) error {
+	return os.ErrPermission
+}
+
+func (FS) Readlink(path string) (string, error) {
+	return "", os.ErrInvalid
+}
+
+func (e FS) RealPath(path string) (string, error) {
+	if _, err := e.Stat(path); err != nil {
+		return "", err
+	}
+
+	return path, nil
+}
+
+func (FS) Mount(path string, fs vfs.FS, index byte) error {
+	return os.ErrPermission
+}
+
+func (FS) SetExtendedAttrs(path string, attrs vfs.Attributes) error {
+	return os.ErrPermission
 }
